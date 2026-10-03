@@ -224,6 +224,8 @@ ul.b li::marker{color:var(--ink-3)}
 svg text{font-family:var(--sans)}
 .nlabel{font-size:var(--fs,12.5px);font-weight:600;fill:var(--ink);paint-order:stroke;stroke:var(--halo);stroke-width:3.2px;stroke-linejoin:round;pointer-events:none}
 .nstock{font-family:var(--mono);font-weight:400;font-size:calc(var(--fs,12.5px)*.86);fill:var(--ink-2)}
+.nstock.kept{font-weight:600;fill:var(--ink)}
+.nheld{font-family:var(--mono);font-weight:400;font-size:calc(var(--fs,12.5px)*.74);fill:var(--ink-3)}
 .elabel{font-family:var(--mono);font-weight:600;font-size:calc(var(--fs,12.5px)*.92);paint-order:stroke;stroke:var(--halo);stroke-width:3.4px;stroke-linejoin:round;pointer-events:none}
 .node{cursor:pointer}
 .node:focus{outline:none}
@@ -397,6 +399,7 @@ svg text{font-family:var(--sans)}
       <div class="leg" id="leg-roles"></div>
       <div class="nodekey" id="leg-persist"></div>
       <p class="note" style="margin-top:8px">Node size: circle area = medallions the holder has a lien on at year end.</p>
+      <p class="note">Number under each lender = medallions held at year end (Medallions moved) or share of its book kept (Markov share).</p>
       <p class="note">Public = no open loan on record that year (not yet financed, released, or lapsed); not proof of no debt. Arrows out of it are new loans; arrows into it are exits.</p>
     </section>
     <section class="card">
@@ -737,7 +740,7 @@ function computeTargets(){
       .forEach(function(i){
         var n = NODES[i], x = NX(n), y = NYp(n), r = tgtN[i] + (S.persist && tgtP[i] != null && tgtP[i] > 0.05 ? loopShape(x, y, tgtN[i], loopDir(n), tgtP[i]).ext + 2 : 0), ang = Math.atan2(y-cy, x-cx), ux = Math.cos(ang), uy = Math.sin(ang);
         // measured width at the real font size (name bold, count mono), with a margin, so near labels never touch
-        var tw = textW(short(n.label), true, G.fs) + textW(fmt(n.stock[S.yi]), false, G.fs*0.86) + 10;
+        var tw = textW(short(n.label), true, G.fs) + textW(S.measure === "p" && n.p_stay[S.yi] != null ? pct(n.p_stay[S.yi]) + " kept " + Math.round(n.stock[S.yi]) + " held" : String(Math.round(n.stock[S.yi])), false, G.fs*0.86) + 10;
         var lx = x + ux*(r+5), ly = y + uy*(r+5) + (uy > 0.25 ? G.fs*0.8 : uy < -0.25 ? -2 : G.fs*0.35);
         var x0 = ux > 0.25 ? lx : ux < -0.25 ? lx - tw : lx - tw/2;
         var b = [x0 - 2, ly - G.fs*1.05, x0 + tw + 2, ly + G.fs*0.35];
@@ -913,6 +916,7 @@ function buildNodes(){
     var t1 = mk("text", {"class":"nlabel"}, g);
     var tn = document.createElementNS(NS, "tspan"); t1.appendChild(tn);
     var ts = document.createElementNS(NS, "tspan"); ts.setAttribute("class","nstock"); t1.appendChild(ts);
+    var th = document.createElementNS(NS, "tspan"); th.setAttribute("class","nheld"); t1.appendChild(th);
     tn.textContent = (G.radial && n.id !== PUB) ? short(n.label) : n.label;
     c.setAttribute("fill", "var(--r-"+n.role+"-fill)"); c.setAttribute("stroke", "var(--r-"+n.role+"-line)");
     c.setAttribute("stroke-width", n.role==="distressed" ? 2 : 1.4);
@@ -924,13 +928,18 @@ function buildNodes(){
     g.addEventListener("focus", function(){ S.hover={t:"n", id:n.id}; refreshInsp(); applyDim(); });
     g.addEventListener("blur", function(){ S.hover=null; refreshInsp(); applyDim(); });
     var ll = mk("text", {"class":"llabel", "text-anchor":"middle"}, g);
-    nodeEls.push({g:g, c:c, ring:ring, t1:t1, tn:tn, ts:ts, loop:loop, ll:ll, evring:evring});
+    nodeEls.push({g:g, c:c, ring:ring, t1:t1, tn:tn, ts:ts, th:th, loop:loop, ll:ll, evring:evring});
   });
 }
 
 function placeLabel(n, e, x, y, r){
   var radialRing = G.radial && n.id !== PUB;
-  e.ts.textContent = fmt(n.stock[S.yi]);
+  // map labels: whole medallions; under Markov share the main number is the share KEPT, the count small after it
+  var held = Math.round(n.stock[S.yi]).toLocaleString("en-US"), kp = NODES[NI[n.id]].p_stay[S.yi];
+  var markov = S.measure === "p" && kp != null;
+  e.ts.textContent = markov ? pct(kp).replace("&gt;", ">") + " kept" : held;
+  e.ts.setAttribute("class", markov ? "nstock kept" : "nstock");
+  e.th.textContent = markov ? " " + held + " held" : "";
   if (!radialRing){
     // two lines under the node
     e.t1.setAttribute("text-anchor","middle");
@@ -965,7 +974,7 @@ function draw(){
       e.ll.setAttribute("x", (sh.apex[0] + sh.ux*off).toFixed(1));
       e.ll.setAttribute("y", (sh.apex[1] + sh.uy*off + G.fs*0.3).toFixed(1));
       var pv = persistOf(i);
-      e.ll.textContent = pv == null ? "" : S.measure === "p" ? pct(pv).replace("&gt;", ">") : fmt(stayedOf(i)) + " stayed";
+      e.ll.textContent = pv == null ? "" : S.measure === "p" ? pct(pv).replace("&gt;", ">") : Math.round(stayedOf(i)).toLocaleString("en-US") + " stayed";
     }
     placeLabel(n, e, x, y, G.radial && n.id !== PUB ? r + e.lext + 2 : r);
     var act = activeLenders[n.id];
@@ -1149,6 +1158,7 @@ function nodeInsp(id){
   var h = "<p class='insp-h'>"+esc(n.label)+"</p><p class='insp-s'>"+esc(ROLELABEL[n.role])+" &middot; "+winLabel()+"</p>";
   h += "<table class='kv'><tr><td>Held, "+s0lbl+"</td><td class='n'>"+fmt(s0)+"</td></tr>";
   h += "<tr><td>Held, end of "+YEARS[S.yi]+"</td><td class='n'><b>"+fmt(s1)+"</b></td></tr>";
+  var frac = [s0, s1].some(function(v){ return Math.abs(v - Math.round(v)) >= 0.05; });
   var pv = persistOf(ni);
   h += "<tr><td>Stayed in "+YEARS[S.yi]+"</td><td class='n'><b>"+fmt(stayedOf(ni))+" ("+pct(pv)+")</b></td></tr>";
   h += "<tr class='sec'><td colspan='2'>Self-loop: share stayed, 2000 to 2025</td></tr><tr><td colspan='2'>"+spark(ni)+"</td></tr>";
@@ -1166,6 +1176,7 @@ function nodeInsp(id){
     var oi = 0; if (S.win!=="cum") oi = otherInternal(S.yi); else for (var y=0;y<=S.yi;y++) oi += otherInternal(y);
     h += "<p class='small'>Not drawn: "+fmt(oi)+" medallions moved among the small lenders inside it.</p>";
   }
+  if (frac) h += "<p class='small'>Fractional: shared loans are split among their lenders.</p>";
   if (id === PUB) h += "<p class='small'>Public = no open loan on record that year (not yet financed, released, or lapsed); not proof of no debt. Lenders + Public = "+fmt(DS.total)+" medallions every year; the ~600 medallions never named by a UCC filing are outside the data.</p>";
   h += "<p class='small'>All kinds, no threshold. "+(S.focus===id ? "Click again to clear focus." : "Click to focus.")+"</p>";
   return h;
