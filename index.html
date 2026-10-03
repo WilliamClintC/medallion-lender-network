@@ -128,6 +128,8 @@ details.earlier ul{margin:4px 0 0;padding-left:17px}
 .evrow.t2.future{color:var(--ink-3)}
 .evrow.t2.now{color:var(--ink)}
 #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+#netlabels{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+#netlabels *{pointer-events:none}
 .node.lossdim{animation:lossdim .9s ease-out}
 @keyframes lossdim{0%{opacity:1}35%{opacity:.25}100%{opacity:1}}
 @media (prefers-reduced-motion: reduce){.node.lossdim{animation:none}}
@@ -460,6 +462,7 @@ body.capture #tlscroll{max-height:none}
     <div class="netbox" id="netbox">
       <div class="focusbar" id="focusbar"></div>
       <canvas id="fx" aria-hidden="true"></canvas>
+      <svg id="netlabels" aria-hidden="true" viewBox="0 0 1000 650"><g id="g-nlabels"></g></svg>
       <div class="banner" id="banner" role="status" aria-live="polite"></div>
       <div class="oplegend" id="oplegend"></div>
       <div class="thinnote" id="thinnote">2000 to 2001: the filing record is thin (Figure 88); new-loan counts understate lending.</div>
@@ -956,7 +959,7 @@ function loopExt(i, r, w){ return w == null || !S.persist ? 0 : (12 + w*1.25 + r
 function pad(){ return 0; }
 
 /* ---------- geometry ---------- */
-var svg = $("net"), gE = $("g-edges"), gH = $("g-hits"), gN = $("g-nodes"), gL = $("g-elabels");
+var svg = $("net"), svgL = $("netlabels"), gNL = $("g-nlabels"), gE = $("g-edges"), gH = $("g-hits"), gN = $("g-nodes"), gL = $("g-elabels");
 var NS = "http://www.w3.org/2000/svg";
 var G = {};
 // desktop: the coordinate system IS the box (1 unit = 1 css px), so nodes spread to the box's aspect ratio;
@@ -980,7 +983,8 @@ function layout(){
     }
   }
   G.rs = nodeScale();
-  svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
+  svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H); svgL.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
+  svgL.style.setProperty("--fs", G.fs + "px");
   svg.style.setProperty("--fs", G.fs + "px");
 }
 function NX(n){ return n._px != null ? n._px : G.radial ? G.x0 + n.fx*G.side : G.l + n.fx*(G.W - G.l - G.r); }
@@ -1477,15 +1481,15 @@ function mk(tag, attrs, parent){ var el=document.createElementNS(NS, tag); for (
 function short(s){ return (G.maxc && s.length > G.maxc) ? s.slice(0, G.maxc-1) + String.fromCharCode(8230) : s; }
 
 function buildNodes(){
-  gN.innerHTML = ""; nodeEls = [];
+  gN.innerHTML = ""; gNL.innerHTML = ""; nodeEls = [];
   NODES.forEach(function(n){
     var g = mk("g", {"class":"node", tabindex:"0", role:"button", "aria-label": n.label}, gN);
     var loop = mk("path", {"class":"sloop"}, g), lhead = mk("path", {"class":"shead"}, g);
     var oloop = n.id === "Other lenders" ? mk("path", {"class":"sloop", "stroke-dasharray":"1.5 3", "stroke-linecap":"round"}, g) : null;
-    var olab = n.id === "Other lenders" ? mk("text", {"class":"llabel", "text-anchor":"middle"}, g) : null;
+    var olab = n.id === "Other lenders" ? mk("text", {"class":"llabel", "text-anchor":"middle"}, gNL) : null;
     var full = n.id === PUB ? mk("circle", {fill:"none", stroke:"var(--ink-3)", "stroke-width":1, "stroke-dasharray":"2 4", "stroke-opacity":0.6, "pointer-events":"none"}, g) : null;
     var c = mk("circle", {}, g), ring = mk("circle", {"class":"ring"}, g), evring = mk("circle", {"class":"evring"}, g);
-    var t1 = mk("text", {"class":"nlabel"}, g);
+    var t1 = mk("text", {"class":"nlabel"}, gNL);
     var tn = document.createElementNS(NS, "tspan"); t1.appendChild(tn);
     var ts = document.createElementNS(NS, "tspan"); ts.setAttribute("class","nstock"); t1.appendChild(ts);
     var th = document.createElementNS(NS, "tspan"); th.setAttribute("class","nheld"); t1.appendChild(th);
@@ -1499,7 +1503,7 @@ function buildNodes(){
     g.addEventListener("keydown", function(ev){ if (ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); toggleFocus(n.id); } });
     g.addEventListener("focus", function(){ S.hover={t:"n", id:n.id}; refreshInsp(); applyDim(); });
     g.addEventListener("blur", function(){ S.hover=null; refreshInsp(); applyDim(); });
-    var ll = mk("text", {"class":"llabel", "text-anchor":"middle"}, g);
+    var ll = mk("text", {"class":"llabel", "text-anchor":"middle"}, gNL);
     nodeEls.push({full:full, g:g, c:c, ring:ring, t1:t1, tn:tn, ts:ts, th:th, loop:loop, lhead:lhead, oloop:oloop, olab:olab, ll:ll, evring:evring});
   });
 }
@@ -1690,7 +1694,7 @@ function applyDim(){
     if (f && !nbr[id]) op = 0.28;
     if (spot && !f && !spot.ids[id]) op = 0.25;
     if (he && id !== he.from && id !== he.to) op = Math.min(op, 0.45);
-    e.g.style.opacity = op;
+    e.g.style.opacity = op; e.t1.style.opacity = op; e.ll.style.opacity = op;
     e.ring.style.stroke = (f===id) ? "var(--ink)" : "";
     e.ring.style.strokeWidth = (f===id) ? "2px" : "";
     var show = labelSet[id] || id===hn || (f && nbr[id]) || (he && (id===he.from || id===he.to));
