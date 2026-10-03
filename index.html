@@ -54,7 +54,8 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);-webkit-text-size-adjust:100%}
-.wrap{max-width:1280px;margin:0 auto;padding:18px 16px 40px}
+.wrap{margin:0 auto;padding:18px 20px 40px}
+@media (min-width:2200px){.wrap{max-width:2400px}}
 h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
 .sub{color:var(--ink-2);margin:2px 0 0;font-size:13.5px}
 .top{display:flex;gap:10px 16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
@@ -92,11 +93,7 @@ details.earlier ul{margin:4px 0 0;padding-left:17px}
 .tllayers{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:6px 0 0;font-size:12.5px}
 .tllayers .chk{font-size:12.5px}
 .ldot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:0 0 auto}
-#evpanel > summary{cursor:pointer;list-style:none}
-#evpanel > summary::-webkit-details-marker{display:none}
 .evpanel summary h2{display:inline;margin:0}
-#evpanel > summary::after{content:" (hide)";font-size:11px;color:var(--ink-3)}
-#evpanel:not([open]) > summary::after{content:" (show)"}
 .evtools{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin:6px 0;font-size:12.5px}
 .evlist{max-height:440px;overflow-y:auto;overflow-x:hidden;border-top:1px solid var(--rule);padding-right:4px}
 .evyear{font:600 11.5px var(--mono);color:var(--ink-3);margin:8px 0 2px;letter-spacing:.04em}
@@ -129,7 +126,11 @@ details.earlier ul{margin:4px 0 0;padding-left:17px}
 .evrow.t2{margin-left:12px;font-size:12.5px;color:var(--ink-2)}
 .evrow.t2.future{color:var(--ink-3)}
 .evrow.t2.now{color:var(--ink)}
-.banner{position:absolute;left:10px;top:10px;max-width:min(560px,80%);background:var(--panel);border:1px solid var(--ink-3);border-left:5px solid var(--lc,var(--ink));border-radius:4px;padding:6px 12px;font:600 15px/1.25 var(--display);box-shadow:0 2px 10px rgba(0,0,0,.14);pointer-events:none;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.node.lossdim{animation:lossdim .9s ease-out}
+@keyframes lossdim{0%{opacity:1}35%{opacity:.25}100%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.node.lossdim{animation:none}}
+.banner{position:absolute;z-index:2;left:10px;top:10px;max-width:min(560px,80%);background:var(--panel);border:1px solid var(--ink-3);border-left:5px solid var(--lc,var(--ink));border-radius:4px;padding:6px 12px;font:600 15px/1.25 var(--display);box-shadow:0 2px 10px rgba(0,0,0,.14);pointer-events:none;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s}
 .banner.on{opacity:1;transform:none}
 .banner .bw{display:block;font:600 11px var(--sans);font-variant:small-caps;letter-spacing:.06em;color:var(--ink-2)}
 @media (prefers-reduced-motion: reduce){.banner{transition:none;transform:none}}
@@ -172,10 +173,33 @@ details.earlier ul{margin:4px 0 0;padding-left:17px}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .small{font-size:12px;color:var(--ink-3);margin:6px 0 0}
 .linkbtn{background:none;border:0;padding:0 2px;color:var(--ink-2);text-decoration:underline;cursor:pointer;font-size:12.5px}
-.main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
-@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+.app{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
+.app .ctrl{margin:0}
+.tlpanel{padding:10px 12px;min-width:0}
+.side-inner{display:flex;flex-direction:column;gap:14px;min-width:0}
+.evhead{display:flex;align-items:baseline;gap:8px}
+.evhead h2{margin:0}
+.evpanel.collapsed .evbody{display:none}
+@media (min-width:1100px){
+  .app{grid-template-columns:minmax(0,1fr) clamp(320px,21vw,380px);grid-template-areas:"ctrl ctrl" "net side" "tl side"}
+  .app .ctrl{grid-area:ctrl} #netbox{grid-area:net} #tlpanel{grid-area:tl} #side{grid-area:side}
+  #side{position:relative;min-height:0}
+  .side-inner{position:absolute;inset:0;overflow:hidden}
+  .side-inner > .card{min-height:0}
+  #yearcard{flex:0 1 auto;max-height:42%;overflow:auto}
+  #evcard{flex:1 1 0;min-height:160px;display:flex;flex-direction:column}
+  #evcard .evbody{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  #evcard .evlist{flex:1 1 0;max-height:none;min-height:0}
+  #evcard.collapsed{flex:0 0 auto;min-height:0}
+  #insp{flex:0 1 auto;max-height:30%;overflow:auto}
+  #tlscroll{max-height:max(150px,24vh);overflow-y:auto}   /* major rows sit on top; minor rows scroll inside the strip */
+  #tlpanel .note{max-width:none}
+}
+.app:fullscreen{background:var(--bg);padding:14px;overflow:auto}
+.app::backdrop{background:var(--bg)}
 .netbox{background:var(--panel);border:1px solid var(--rule);border-radius:6px;position:relative;min-width:0}
-#net{display:block;width:100%;height:auto;touch-action:manipulation}
+#net{display:block;width:100%;height:100%;touch-action:manipulation}
+#net.fixedaspect{height:auto}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
 .card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;min-width:0}
 .card h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;margin:0 0 6px}
@@ -237,33 +261,15 @@ svg text{font-family:var(--sans)}
         <label><input type="radio" name="ds" id="ds-full" value="full"><span id="ds-full-lbl">All lenders</span></label>
       </div>
       <button class="btn" id="explain" type="button" aria-pressed="true">Hide explanations</button>
+      <button class="btn" id="fullscreen" type="button" hidden>Full screen</button>
       <button class="btn" id="theme" type="button" aria-label="Switch colour theme">Theme: auto</button>
     </div>
   </div>
   <p class="note" id="note-ds" style="margin-top:6px"></p>
   <p class="nodollar"><b>No dollar amounts.</b> Every number is a count of medallions (fractional where a loan is shared), not loan dollars. UCC filings record no loan principal.</p>
 
+  <div class="app" id="app">
   <div class="ctrl" role="group" aria-label="Controls">
-    <div class="tlrow" id="tlrow">
-      <div class="tltop">
-        <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
-        <button class="btn" id="prev" type="button" aria-label="Previous year">&lsaquo;</button>
-        <button class="btn" id="next" type="button" aria-label="Next year">&rsaquo;</button>
-        <div class="seg" id="speed" role="group" aria-label="Play speed">
-          <button type="button" id="speed-05" data-s="0.5" aria-pressed="false">0.5x</button>
-          <button type="button" id="speed-1" data-s="1" aria-pressed="true">1x</button>
-          <button type="button" id="speed-2" data-s="2" aria-pressed="false">2x</button>
-          <button type="button" id="speed-4" data-s="4" aria-pressed="false">4x</button>
-        </div>
-        <output id="year-out" class="yr" for="year">2021</output>
-        <span class="small" style="margin:0">Timeline: hover an event for its source; click to jump to its year</span>
-      </div>
-      <input type="range" id="year" min="0" max="25" step="1" value="21" aria-label="Year">
-      <div class="tllayers" id="tl-layers" role="group" aria-label="Event layers"><span class="glbl">Events</span><label class="chk"><input type="checkbox" id="major-only">Major only</label></div>
-      <p class="note">Large type = major events: the sales of 250+ medallions (Capital One, Signature, Melrose and LOMTO to DePalma), the Melrose and LOMTO wind-up, Doral (the first lender failure), and the market turning points (Uber, price peak, COVID, MRP closings). Everything else is minor, in small type beneath. Each event is named on the strip and coloured by layer. Hover or click a lender on the map to highlight its events (the rest dim); click an event to jump to its year. "Book turns bad" (off by default) is each lender's first sign of trouble in its own filings (stage 232).</p>
-      <div id="tlscroll"><svg id="tl" role="group" aria-label="Event timeline, 2000 to 2025" viewBox="0 0 1000 70"></svg></div>
-      <div class="tltip" id="tl-tip" role="tooltip"></div>
-    </div>
     <div class="cg cg-wide">
       <div class="grp">
         <span class="glbl" id="measure-lbl">Width</span>
@@ -299,8 +305,10 @@ svg text{font-family:var(--sans)}
     <div class="cg">
       <div class="grp">
         <label class="chk"><input type="checkbox" id="show-persist" checked>Show self-loops (persistence)</label>
+        <label class="chk"><input type="checkbox" id="animate" checked>Animate flows</label>
       </div>
       <p class="note" id="note-persist"></p>
+      <p class="note" id="note-anim">Moving dots travel in the direction of the move; more dots = more medallions. Only this year's moves carry dots, so faded older moves sit still.</p>
     </div>
     <div class="cg cg-wide">
       <div class="grp" id="kinds" role="group" aria-labelledby="kinds-lbl">
@@ -324,9 +332,9 @@ svg text{font-family:var(--sans)}
     </div>
   </div>
 
-  <div class="main">
     <div class="netbox" id="netbox">
       <div class="focusbar" id="focusbar"></div>
+      <canvas id="fx" aria-hidden="true"></canvas>
       <div class="banner" id="banner" role="status" aria-live="polite"></div>
       <svg id="net" role="img" aria-labelledby="net-desc" viewBox="0 0 1000 650">
         <desc id="net-desc">Network of medallion-loan holders. Nodes sit at fixed positions; arrows show medallions moving between holders in the selected year.</desc>
@@ -334,15 +342,30 @@ svg text{font-family:var(--sans)}
       </svg>
       <div class="hint" id="hint"></div>
     </div>
-    <div class="side">
-      <section class="card evpanel">
-        <details id="evpanel" open>
-          <summary><h2>Events</h2></summary>
-          <div class="evtools"><label class="chk"><input type="checkbox" id="ev-only" disabled>Only this lender</label><span class="small" id="ev-who" style="margin:0"></span></div>
-          <div class="evlist" id="evlist" role="list"></div>
-        </details>
-      </section>
-      <section class="card" aria-live="polite">
+    <div class="tlpanel card" id="tlpanel">
+      <div class="tlrow" id="tlrow">
+      <div class="tltop">
+        <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
+        <button class="btn" id="prev" type="button" aria-label="Previous year">&lsaquo;</button>
+        <button class="btn" id="next" type="button" aria-label="Next year">&rsaquo;</button>
+        <div class="seg" id="speed" role="group" aria-label="Play speed">
+          <button type="button" id="speed-05" data-s="0.5" aria-pressed="false">0.5x</button>
+          <button type="button" id="speed-1" data-s="1" aria-pressed="true">1x</button>
+          <button type="button" id="speed-2" data-s="2" aria-pressed="false">2x</button>
+          <button type="button" id="speed-4" data-s="4" aria-pressed="false">4x</button>
+        </div>
+        <output id="year-out" class="yr" for="year">2021</output>
+        <span class="small" style="margin:0">Timeline: hover an event for its source; click to jump to its year</span>
+      </div>
+      <input type="range" id="year" min="0" max="25" step="1" value="21" aria-label="Year">
+      <div class="tllayers" id="tl-layers" role="group" aria-label="Event layers"><span class="glbl">Events</span><label class="chk"><input type="checkbox" id="major-only">Major only</label></div>
+      <p class="note">Large type = major events: the sales of 250+ medallions (Capital One, Signature, Melrose and LOMTO to DePalma), the Melrose and LOMTO wind-up, Doral (the first lender failure), and the market turning points (Uber, price peak, COVID, MRP closings). Everything else is minor, in small type beneath. Each event is named on the strip and coloured by layer. Hover or click a lender on the map to highlight its events (the rest dim); click an event to jump to its year. "Book turns bad" (off by default) is each lender's first sign of trouble in its own filings (stage 232).</p>
+      <div id="tlscroll"><svg id="tl" role="group" aria-label="Event timeline, 2000 to 2025" viewBox="0 0 1000 70"></svg></div>
+      <div class="tltip" id="tl-tip" role="tooltip"></div>
+    </div>
+    </div>
+    <div class="side" id="side"><div class="side-inner">
+      <section class="card" id="yearcard" aria-live="polite">
         <h2>The year</h2>
         <div class="bigyr" id="hl-year">2021</div>
         <div class="lmini" id="hl-lender"></div>
@@ -350,11 +373,18 @@ svg text{font-family:var(--sans)}
         <dl class="stats" id="hl-stats"></dl>
         <ul class="b" id="hl-notes"></ul>
       </section>
+      <section class="card evpanel" id="evcard">
+        <div class="evhead"><h2>Events</h2><button type="button" class="linkbtn" id="ev-toggle" aria-expanded="true" aria-controls="evbody">hide</button></div>
+        <div class="evbody" id="evbody">
+          <div class="evtools"><label class="chk"><input type="checkbox" id="ev-only" disabled>Only this lender</label><span class="small" id="ev-who" style="margin:0"></span></div>
+          <div class="evlist" id="evlist" role="list"></div>
+        </div>
+      </section>
       <section class="card" id="insp" aria-live="polite">
         <h2>Inspector</h2>
         <div id="insp-body"></div>
       </section>
-    </div>
+    </div></div>
   </div>
 
   <div class="legends">
@@ -367,7 +397,7 @@ svg text{font-family:var(--sans)}
       <div class="leg" id="leg-roles"></div>
       <div class="nodekey" id="leg-persist"></div>
       <p class="note" style="margin-top:8px">Node size: circle area = medallions the holder has a lien on at year end.</p>
-      <p class="note">Public: medallions with no open lien on record; arrows out of it are new loans, arrows into it are exits.</p>
+      <p class="note">Public = no open loan on record that year (not yet financed, released, or lapsed); not proof of no debt. Arrows out of it are new loans; arrows into it are exits.</p>
     </section>
     <section class="card">
       <h2>Size keys</h2>
@@ -382,7 +412,7 @@ svg text{font-family:var(--sans)}
       <li>Holder of record: a sale is dated by its assignment filing.</li>
       <li>A sale can go unfiled, so some moves are missing or late.</li>
       <li>Exits are mostly lapses, dated up to 5 years after payoff.</li>
-      <li>Public = medallions with no open lien on record (loan closed, lapsed, or never filed); not proof the owner is debt-free.</li>
+      <li>Public (no lender) = a medallion with no open UCC loan on record at that year end: not yet financed, loan terminated (released), loan lapsed (5-year UCC expiry, the largest share), or between loans. It is a state, not a group of people; lenders + Public = 13,122 medallions every year. Medallions never named by any UCC filing (~600) are outside the data. Not proof the owner is debt-free.</li>
       <li>Moves among the small lenders inside "Other lenders" are not drawn (count per year in the inspector).</li>
       <li>Persistence = share of the start-of-year book still with the same holder at year end; moves within "Other lenders" count as staying.</li>
       <li>Self-loop: arrow from a holder back to itself; width = the share (Markov share) or number (Medallions moved) of its start-of-year book that stayed, on the same scale as the outgoing arrows.</li>
@@ -594,7 +624,7 @@ function loopShape(cx, cy, r, a, w){
   for (var k=0;k<=30;k++){ var t=k/30, u=1-t;
     P.push([u*u*u*P0[0]+3*u*u*t*P1[0]+3*u*t*t*P2[0]+t*t*t*P3[0], u*u*u*P0[1]+3*u*u*t*P1[1]+3*u*t*t*P2[1]+t*t*t*P3[1]]); }
   var apex = P[15], ext = Math.hypot(apex[0]-cx, apex[1]-cy) - r + w/2;
-  return {d: buildTaper(P, w), apex: apex, ext: ext, ux: Math.cos(a), uy: Math.sin(a)};
+  return {d: buildTaper(P, w), apex: apex, ext: ext, ux: Math.cos(a), uy: Math.sin(a), P: P};
 }
 function loopExt(i, r, w){ return w == null || !S.persist ? 0 : (12 + w*1.25 + r*0.35)*0.75 + w/2 + 2; }
 function pad(){ return 0; }
@@ -603,15 +633,25 @@ function pad(){ return 0; }
 var svg = $("net"), gE = $("g-edges"), gH = $("g-hits"), gN = $("g-nodes"), gL = $("g-elabels");
 var NS = "http://www.w3.org/2000/svg";
 var G = {};
+// desktop: the coordinate system IS the box (1 unit = 1 css px), so nodes spread to the box's aspect ratio;
+// phone: a fixed-aspect viewBox, scaled to the width
 function layout(){
-  var cw = $("netbox").clientWidth || 900, phone = cw < 620;
-  if (!DS.radial){
-    G = phone ? {W:560, H:780, l:46, r:46, t:44, b:66, rs:0.40, ws:0.42, fs:15.5, radial:false}
-              : {W:1000, H:650, l:74, r:74, t:42, b:62, rs:0.55, ws:0.55, fs:12.5, radial:false};
+  var box = $("netbox"), cw = box.clientWidth || 900, ch = box.clientHeight || 650, phone = cw < 620;
+  svg.classList.toggle("fixedaspect", phone);
+  if (phone){
+    if (!DS.radial) G = {W:560, H:780, l:46, r:46, t:44, b:66, rs:0.40, ws:0.42, fs:15.5, radial:false};
+    else { G = {W:560, H:500, side:330, rs:0.30, ws:0.36, fs:12.5, radial:true, maxc:13}; G.x0 = (G.W - G.side)/2; G.y0 = (G.H - G.side)/2; }
   } else {
-    G = phone ? {W:560, H:500, side:330, rs:0.30, ws:0.36, fs:12.5, radial:true, maxc:13}
-              : {W:1160, H:860, side:760, rs:0.42, ws:0.50, fs:12, radial:true, maxc:30};
-    G.x0 = (G.W - G.side)/2; G.y0 = (G.H - G.side)/2;
+    var W = Math.round(cw), H = Math.round(Math.max(420, ch));
+    var k = Math.min(1.7, Math.min(W/1000, H/650));                  // size scale against the old 1000 x 650 design
+    var fs = Math.max(12, Math.min(16, 12.5*Math.sqrt(Math.max(k, 0.6))));
+    if (!DS.radial){
+      G = {W:W, H:H, l:Math.max(64, fs*6), r:Math.max(64, fs*6), t:fs*3.4, b:fs*5, rs:0.55*k, ws:0.55*k, fs:fs, radial:false};
+    } else {
+      var pad = fs*16, side = Math.max(320, Math.min(W - 2*pad, H - fs*6)), kr = side/760;
+      G = {W:W, H:H, side:side, rs:0.42*kr, ws:0.50*kr, fs:fs, radial:true, maxc:30};
+      G.x0 = (W - side)/2; G.y0 = (H - side)/2;
+    }
   }
   svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
   svg.style.setProperty("--fs", G.fs + "px");
@@ -624,7 +664,19 @@ function widthOf(val, p){
   return Math.max(0.8, G.ws * Math.sqrt(val));
 }
 function qpt(a,c,b,t){ var u=1-t; return [u*u*a[0]+2*u*t*c[0]+t*t*b[0], u*u*a[1]+2*u*t*c[1]+t*t*b[1]]; }
-function edgeGeom(fromId, toId, w, rf, rt){
+// cut a sampled path at a fraction of its arc length (for the draw-on reveal)
+function cutPath(P, f){
+  if (f >= 0.999) return P;
+  var s = [0]; for (var j=1;j<P.length;j++) s.push(s[j-1] + Math.hypot(P[j][0]-P[j-1][0], P[j][1]-P[j-1][1]));
+  var L = s[s.length-1]*Math.max(0.02, f), out = [P[0]];
+  for (var q=1;q<P.length;q++){
+    if (s[q] < L){ out.push(P[q]); continue; }
+    var u = (L - s[q-1])/Math.max(1e-6, s[q]-s[q-1]);
+    out.push([P[q-1][0] + (P[q][0]-P[q-1][0])*u, P[q-1][1] + (P[q][1]-P[q-1][1])*u]); break;
+  }
+  return out.length >= 2 ? out : [P[0], P[1]];
+}
+function edgeGeom(fromId, toId, w, rf, rt, rev){
   var nA = NODES[NI[fromId]], nB = NODES[NI[toId]];
   var A = [NX(nA), NYp(nA)], B = [NX(nB), NYp(nB)];
   var dx=B[0]-A[0], dy=B[1]-A[1], L=Math.hypot(dx,dy) || 1;
@@ -642,11 +694,11 @@ function edgeGeom(fromId, toId, w, rf, rt){
   var i0 = 0, i1 = M;
   while (i0 < M-2 && Math.hypot(pts[i0][0]-A[0], pts[i0][1]-A[1]) < rf + pad() + 2) i0++;
   while (i1 > i0+2 && Math.hypot(pts[i1][0]-B[0], pts[i1][1]-B[1]) < rt + pad() + 2.5) i1--;
-  var P = pts.slice(i0, i1+1), tip = P[P.length-1];
+  var Pfull = pts.slice(i0, i1+1), P = rev == null ? Pfull : cutPath(Pfull, rev), tip = P[P.length-1];
   var d = buildTaper(P, w);
   var c = "M"+P[0][0].toFixed(1)+","+P[0][1].toFixed(1)+" Q"+C[0].toFixed(1)+","+C[1].toFixed(1)+" "+tip[0].toFixed(1)+","+tip[1].toFixed(1);
   var mid = qpt(A,C,B,0.5);
-  return {d:d, c:c, mid:mid, nx:nx, ny:ny, A:A, B:B, C:C};
+  return {d:d, c:c, mid:mid, nx:nx, ny:ny, A:A, B:B, C:C, P:Pfull};
 }
 
 /* ---------- targets and tween ---------- */
@@ -664,7 +716,8 @@ function computeTargets(){
     if (sv.v <= 0 || sv.v < minv) return;
     var p = shareOf(e, sv.v);
     var a = 0.14 + 0.86*recency(e, sv.v);
-    tgtE[k] = {w:widthOf(sv.v, p), col:"var(--k-"+sv.dom+")", from:e.from, to:e.to, v:sv.v, p:p, dom:sv.dom, a:a};
+    var ty = DS.byYear[S.yi][k], fresh = ty ? shownVal(ty).v : 0;          // this year's shown flow carries the dots
+    tgtE[k] = {w:widthOf(sv.v, p), col:"var(--k-"+sv.dom+")", from:e.from, to:e.to, v:sv.v, p:p, dom:sv.dom, a:a, fresh:fresh};
     shown.push(k);
   });
   var big = S.measure==="p" ? function(k){ return tgtE[k].v >= 25; } : function(k){ return tgtE[k].v >= 100; };
@@ -682,10 +735,12 @@ function computeTargets(){
     NODES.map(function(n,i){ return i; }).filter(function(i){ return labelSet[NODES[i].id] && NODES[i].id !== PUB; })
       .sort(function(a,b){ return NODES[b].stock[S.yi]-NODES[a].stock[S.yi]; })
       .forEach(function(i){
-        var n = NODES[i], x = NX(n), y = NYp(n), r = tgtN[i] + loopExt(i, tgtN[i], tgtP[i]), ang = Math.atan2(y-cy, x-cx), ux = Math.cos(ang), uy = Math.sin(ang);
-        var tw = (short(n.label).length + fmt(n.stock[S.yi]).length + 1)*cw, lx = x + ux*(r+5), ly = y + uy*(r+5) + (uy > 0.25 ? G.fs*0.8 : uy < -0.25 ? -2 : G.fs*0.35);
+        var n = NODES[i], x = NX(n), y = NYp(n), r = tgtN[i] + (S.persist && tgtP[i] != null && tgtP[i] > 0.05 ? loopShape(x, y, tgtN[i], loopDir(n), tgtP[i]).ext + 2 : 0), ang = Math.atan2(y-cy, x-cx), ux = Math.cos(ang), uy = Math.sin(ang);
+        // measured width at the real font size (name bold, count mono), with a margin, so near labels never touch
+        var tw = textW(short(n.label), true, G.fs) + textW(fmt(n.stock[S.yi]), false, G.fs*0.86) + 10;
+        var lx = x + ux*(r+5), ly = y + uy*(r+5) + (uy > 0.25 ? G.fs*0.8 : uy < -0.25 ? -2 : G.fs*0.35);
         var x0 = ux > 0.25 ? lx : ux < -0.25 ? lx - tw : lx - tw/2;
-        var b = [x0, ly - G.fs*0.85, x0 + tw, ly + G.fs*0.2];
+        var b = [x0 - 2, ly - G.fs*1.05, x0 + tw + 2, ly + G.fs*0.35];
         if (placed.some(function(o){ return b[0]<o[2] && b[2]>o[0] && b[1]<o[3] && b[3]>o[1]; })) delete labelSet[n.id];
         else placed.push(b);
       });
@@ -701,7 +756,10 @@ function go(dur){
   Object.keys(keys).forEach(function(k){
     var c = curE[k], t = tgtE[k];
     from[k] = c ? c.w : 0;
-    curE[k] = {w: from[k], col: t ? t.col : c.col, from: (t||c).from, to: (t||c).to, a0: c ? c.a : (t ? t.a : 1), a: c ? c.a : (t ? t.a : 1)};
+    var isNew = !c && t && t.v >= 50 && dur && motionOK();
+    if (isNew) from[k] = t.w;                            // a new big edge draws on at full width
+    curE[k] = {w: from[k], col: t ? t.col : c.col, from: (t||c).from, to: (t||c).to, a0: c ? c.a : (t ? t.a : 1), a: c ? c.a : (t ? t.a : 1),
+               newE: isNew, rv: isNew ? 0 : (c ? c.rv : null)};
   });
   var fromN = curN.slice(), fromP = NODES.map(function(n,i){ return curP[i] == null ? (tgtP[i] == null ? 0 : tgtP[i]) : curP[i]; });
   if (anim){ cancelAnimationFrame(anim.raf); anim = null; }
@@ -711,10 +769,13 @@ function go(dur){
     Object.keys(curE).forEach(function(k){
       var tw = tgtE[k] ? tgtE[k].w : 0, c = curE[k]; c.w = from[k] + (tw - from[k])*e;
       if (tgtE[k]) c.a = c.a0 + (tgtE[k].a - c.a0)*e;
+      if (c.newE) c.rv = Math.min(1, e*1.4);
+      c.fade = tgtE[k] ? null : 1 - e;
     });
     draw();
   }
   function finish(){
+    Object.keys(curE).forEach(function(k){ if (curE[k].newE){ curE[k].newE = false; curE[k].rv = null; } });
     Object.keys(curE).forEach(function(k){ if (!tgtE[k]){ delete curE[k]; if (els[k]){ els[k].path.remove(); els[k].hit.remove(); delete els[k]; } } });
     draw();
   }
@@ -726,6 +787,117 @@ function go(dur){
     step(u < .5 ? 4*u*u*u : 1 - Math.pow(-2*u+2, 3)/2);
     if (u < 1) anim.raf = requestAnimationFrame(tick); else { anim = null; finish(); }
   })};
+}
+
+/* ---------- motion: particles, pulses, draw-on, spotlight (stage 256's feel) ---------- */
+var reduceMQ = null; try { reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)"); } catch(e){}
+function motionOK(){ return !(reduceMQ && reduceMQ.matches); }
+var fx = null, fxc = null, fxMap = {s:1, ox:0, oy:0}, fxRaf = null, fxT0 = null, pulses = [], spot = null, spotT = null, colCache = {};
+var SPEED = 70, DOT_PER = 40, DOT_MAX = 30, CAP = 420;      // px/s; medallions per dot; dots per edge; dots on screen
+function cssCol(v){ if (!colCache[v]) colCache[v] = getComputedStyle(document.documentElement).getPropertyValue(v).trim() || "#888"; return colCache[v]; }
+function fxSize(){
+  fx = fx || $("fx"); fxc = fxc || fx.getContext("2d");
+  var b = $("netbox").getBoundingClientRect(), r = svg.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  fx.width = Math.round(b.width*dpr); fx.height = Math.round(b.height*dpr);
+  var sc = Math.min(r.width / G.W, r.height / G.H);
+  fxMap = {s: sc*dpr, ox: (r.left - b.left + (r.width - G.W*sc)/2)*dpr, oy: (r.top - b.top + (r.height - G.H*sc)/2)*dpr, dpr: dpr};
+  colCache = {};
+}
+// arc-length table for a sampled path
+function arcTable(P){ var s = [0]; for (var j=1;j<P.length;j++) s.push(s[j-1] + Math.hypot(P[j][0]-P[j-1][0], P[j][1]-P[j-1][1])); return s; }
+function atLen(P, s, L){
+  var lo = 0, hi = s.length - 1; while (hi - lo > 1){ var m = (lo+hi) >> 1; if (s[m] < L) lo = m; else hi = m; }
+  var u = (L - s[lo]) / Math.max(1e-6, s[hi] - s[lo]); return [P[lo][0] + (P[hi][0]-P[lo][0])*u, P[lo][1] + (P[hi][1]-P[lo][1])*u];
+}
+function fxFrame(ts){
+  fxRaf = null;
+  if (!fxc) fxSize();
+  if (fxT0 == null) fxT0 = ts;
+  var t = (ts - fxT0)/1000, m = fxMap, ctx = fxc;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0, 0, fx.width, fx.height);
+  ctx.setTransform(m.s, 0, 0, m.s, m.ox, m.oy);
+  var on = $("animate").checked && motionOK();
+  if (on){
+    // plan the dots: this year's shown flow on each drawn edge, and stayed medallions on each self-loop
+    var plan = [], total = 0, f = S.focus;
+    Object.keys(tgtE).forEach(function(k){
+      var e = els[k], c = curE[k], tg = tgtE[k]; if (!e || !e.geo || !c || !(tg.fresh >= Math.max(1, MINSTEPS[S.minIdx]))) return;
+      if (f && c.from !== f && c.to !== f) return;
+      if (spot && !(k === spot.k || (spot.ids[c.from] && spot.ids[c.to]))) return;
+      var n = Math.max(1, Math.min(DOT_MAX, Math.round(tg.fresh / DOT_PER)));
+      plan.push({P:e.geo.P, n:n, w:c.w, col: c.w >= 6 ? cssCol("--halo") : cssCol("--k-" + tg.dom), a: Math.max(0.35, c.a == null ? 1 : c.a)}); total += n;
+    });
+    if (S.persist) nodeEls.forEach(function(e, i){
+      if (!e.loopOn || !e.lP) return; var st = stayedOf(i); if (!(st > 0)) return;
+      if (f && NODES[i].id !== f) return;
+      var n = Math.max(1, Math.min(12, Math.round(st / (DOT_PER*3))));
+      plan.push({P:e.lP, n:n, w:curP[i] || 1, col: cssCol("--ink-2"), a: 0.75}); total += n;
+    });
+    var thin = total > CAP ? CAP / total : 1;          // keep the frame cheap on the 104-lender network
+    plan.forEach(function(p){
+      if (!p.s) p.s = arcTable(p.P);
+      var L = p.s[p.s.length-1]; if (L < 4) return;
+      var n = Math.max(1, Math.round(p.n * thin)), r = Math.max(1.5, Math.min(3.2, 0.15*p.w + 1.4)) / (m.s/m.dpr);
+      ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
+      for (var j=0;j<n;j++){
+        var q = atLen(p.P, p.s, ((t*SPEED) + j*L/n) % L);
+        ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 6.2832); ctx.fill();
+      }
+    });
+    fxCount = total;
+  }
+  // gain pulses: a soft ring expanding outward
+  var now = performance.now();
+  pulses = pulses.filter(function(p){ return now - p.t0 < 900; });
+  pulses.forEach(function(p){
+    var u = (now - p.t0)/900;
+    ctx.globalAlpha = 0.55*(1-u); ctx.strokeStyle = cssCol("--ink-2"); ctx.lineWidth = 2.5*(1-u) + 0.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 4 + 26*u, 0, 6.2832); ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+  if ((on || pulses.length) && !document.hidden) fxRaf = requestAnimationFrame(fxFrame);
+}
+var fxCount = 0;
+function fxKick(){ if (!fxRaf && !document.hidden && motionOK()) fxRaf = requestAnimationFrame(fxFrame); }
+function fxClear(){ if (fxc){ fxc.setTransform(1,0,0,1,0,0); fxc.clearRect(0,0,fx.width,fx.height); } }
+document.addEventListener("visibilitychange", function(){ if (document.hidden){ if (fxRaf){ cancelAnimationFrame(fxRaf); fxRaf = null; } } else fxKick(); });
+// year step: nodes that gain a lot pulse, nodes that lose a lot dim (threshold relative to their book)
+function yearChange(prevYi){
+  if (!motionOK() || prevYi == null || prevYi === S.yi) return;
+  var now = performance.now();
+  NODES.forEach(function(n, i){
+    var a = n.stock[prevYi], b = n.stock[S.yi], d = b - a, thr = Math.max(40, 0.2*Math.max(a, b));
+    if (n.id === PUB || Math.abs(d) < thr) return;
+    if (d > 0) pulses.push({x: NX(n), y: NYp(n), r: radius(b), t0: now});
+    else { var g = nodeEls[i].g; g.classList.remove("lossdim"); void g.getBBox(); g.classList.add("lossdim"); }
+  });
+  fxKick();
+}
+// draw edges on, one after another (focus: largest first; events: the event's edge)
+var revRaf = null;
+function revealEdges(keys, each, gap){
+  if (!motionOK() || !keys.length) return;
+  var t0 = performance.now();
+  keys.forEach(function(k){ if (curE[k]) curE[k].rv = 0; });
+  if (revRaf) cancelAnimationFrame(revRaf);
+  (function tick(){
+    var u = performance.now() - t0, done = true;
+    keys.forEach(function(k, j){ var c = curE[k]; if (!c) return; var v = Math.max(0, Math.min(1, (u - j*gap)/each)); c.rv = v >= 1 ? null : v; if (v < 1) done = false; });
+    draw();
+    revRaf = done ? null : requestAnimationFrame(tick);
+  })();
+}
+// a major event: dim everything but its lenders for about 1.5 s and draw its main edge on
+function spotlight(ev){
+  if (!motionOK()) return;
+  var ids = {}; evL(ev).forEach(function(id){ if (NI[id] != null) ids[id] = 1; });
+  if (!Object.keys(ids).length) return;
+  var main = null, best = 0;
+  Object.keys(tgtE).forEach(function(k){ var t = tgtE[k]; if (ids[t.from] && ids[t.to] && t.v > best){ best = t.v; main = k; } });
+  spot = {ids: ids, k: main};
+  if (spotT) clearTimeout(spotT);
+  applyDim(); if (main) revealEdges([main], 650, 0);
+  spotT = setTimeout(function(){ spot = null; applyDim(); }, 1500);
 }
 
 /* ---------- drawing ---------- */
@@ -788,7 +960,7 @@ function draw(){
     e.loop.style.display = showP ? "" : "none"; e.loopOn = showP; e.lext = 0;
     if (showP){
       var sh = loopShape(x, y, r, loopDir(n), lw);
-      e.loop.setAttribute("d", sh.d); e.lext = sh.ext; e.lapex = sh.apex;
+      e.loop.setAttribute("d", sh.d); e.lext = sh.ext; e.lapex = sh.apex; e.lP = sh.P;
       var off = lw/2 + G.fs*0.75;
       e.ll.setAttribute("x", (sh.apex[0] + sh.ux*off).toFixed(1));
       e.ll.setAttribute("y", (sh.apex[1] + sh.uy*off + G.fs*0.3).toFixed(1));
@@ -814,9 +986,9 @@ function draw(){
     }
     gE.appendChild(els[k].path);
     if (c.w < 0.05){ els[k].path.setAttribute("d",""); els[k].hit.setAttribute("d",""); return; }
-    var geo = edgeGeom(c.from, c.to, c.w, curN[NI[c.from]], curN[NI[c.to]]);
+    var geo = edgeGeom(c.from, c.to, c.w, curN[NI[c.from]], curN[NI[c.to]], c.rv);
     els[k].path.setAttribute("d", geo.d); els[k].path.setAttribute("fill", c.col);
-    els[k].path.setAttribute("fill-opacity", (c.a == null ? 1 : c.a).toFixed(3));
+    els[k].path.setAttribute("fill-opacity", ((c.a == null ? 1 : c.a) * (c.fade == null ? 1 : c.fade)).toFixed(3));
     els[k].hit.setAttribute("d", geo.c); els[k].hit.setAttribute("stroke-width", Math.max(12, c.w));
     els[k].geo = geo;
   });
@@ -872,6 +1044,7 @@ function applyDim(){
     var c = curE[k], op = 0.8, vis = true;
     if (c && f && c.from !== f && c.to !== f){ op = 0; vis = false; }
     if (h && vis) op = (k===h) ? 0.95 : 0.18;
+    if (spot && !f && !h && c){ op = (k === spot.k || (spot.ids[c.from] && spot.ids[c.to])) ? 0.95 : 0.12; }
     els[k].path.style.opacity = op;
     els[k].hit.style.pointerEvents = vis ? "stroke" : "none";
   });
@@ -879,6 +1052,7 @@ function applyDim(){
   nodeEls.forEach(function(e,i){
     var id = NODES[i].id, op = 1;
     if (f && !nbr[id]) op = 0.28;
+    if (spot && !f && !spot.ids[id]) op = 0.25;
     if (he && id !== he.from && id !== he.to) op = Math.min(op, 0.45);
     e.g.style.opacity = op;
     e.ring.style.stroke = (f===id) ? "var(--ink)" : "";
@@ -899,6 +1073,12 @@ function applyDim(){
 function toggleFocus(id){
   S.focus = (S.focus === id) ? null : id; S.pin = null;
   computeTargets(); draw(); refreshInsp();
+  if (S.focus){                                          // its edges draw on in sequence, largest first
+    var ks = Object.keys(tgtE).filter(function(k){ return tgtE[k].from === S.focus || tgtE[k].to === S.focus; })
+                              .sort(function(a, b){ return tgtE[b].v - tgtE[a].v; }).slice(0, 14);
+    revealEdges(ks, 420, 110);
+  }
+  fxKick();
 }
 
 /* ---------- inspector ---------- */
@@ -986,6 +1166,7 @@ function nodeInsp(id){
     var oi = 0; if (S.win!=="cum") oi = otherInternal(S.yi); else for (var y=0;y<=S.yi;y++) oi += otherInternal(y);
     h += "<p class='small'>Not drawn: "+fmt(oi)+" medallions moved among the small lenders inside it.</p>";
   }
+  if (id === PUB) h += "<p class='small'>Public = no open loan on record that year (not yet financed, released, or lapsed); not proof of no debt. Lenders + Public = "+fmt(DS.total)+" medallions every year; the ~600 medallions never named by a UCC filing are outside the data.</p>";
   h += "<p class='small'>All kinds, no threshold. "+(S.focus===id ? "Click again to clear focus." : "Click to focus.")+"</p>";
   return h;
 }
@@ -1169,7 +1350,7 @@ function evL(ev){ return S.ds === "key" ? ev.lk : ev.lf; }       // lender ids i
 function hlNode(){ return (S.hover && S.hover.t === "n") ? S.hover.id : S.focus; }
 function evStat(ev){ var y = Math.floor(ev.x); return y < YEARS[S.yi] ? "past" : y === YEARS[S.yi] ? "now" : "future"; }
 function tlX(x, W){ return 8 + (x - 2000.5)/25*(W - 16); }     // aligned with the slider thumb (year centres)
-var measureCtx = null;
+var measureCtx = null, lastStripH = null;
 function textW(t, bold, size, family){
   try {
     measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
@@ -1247,6 +1428,7 @@ function drawTL(){
   h += lead + dots + labs;
   tl.setAttribute("viewBox", "0 0 "+W+" "+H); tl.setAttribute("height", H);
   tl.innerHTML = h;
+  if (typeof sizeNet === "function" && lastStripH !== H){ lastStripH = H; sizeNet(); }
   // keep the playhead in view when the strip scrolls (narrow screens)
   if (narrow){
     var sl = box.scrollLeft;
@@ -1264,7 +1446,7 @@ function drawTL(){
     var hide = function(){ tip.style.display = "none"; };
     g.addEventListener("mouseenter", show); g.addEventListener("mouseleave", hide);
     g.addEventListener("focus", show); g.addEventListener("blur", hide);
-    var jump = function(){ stop(); setYear(YEARS.indexOf(Math.floor(ev.x)), 600); };
+    var jump = function(){ stop(); setYear(YEARS.indexOf(Math.floor(ev.x)), 600); if (ev.tier === 1) setTimeout(function(){ spotlight(ev); }, 650); };
     g.addEventListener("click", jump);
     g.addEventListener("keydown", function(e){ if (e.key==="Enter" || e.key===" "){ e.preventDefault(); jump(); } });
   });
@@ -1312,6 +1494,7 @@ function banner(){
   void b.offsetWidth;                                   // restart the slide-in
   b.className = "banner on";
   if (timer) bannerT = setTimeout(function(){ b.className = "banner"; }, 2000);
+  spotlight(evs[0]);
 }
 function renderEvents(){
   var H0 = hlNode(), only = $("ev-only").checked && H0, list = $("evlist"), h = "", lastY = null;
@@ -1339,7 +1522,7 @@ function renderEvents(){
   list.querySelectorAll(".evrow").forEach(function(d){
     var i = +d.getAttribute("data-i"), ev = TL[i];
     d.addEventListener("toggle", function(){ evOpen[i] = d.open; });
-    d.querySelector("summary").addEventListener("click", function(){ var yi = YEARS.indexOf(Math.floor(ev.x)); if (yi !== S.yi){ stop(); setYear(yi, 600); } });
+    d.querySelector("summary").addEventListener("click", function(){ var yi = YEARS.indexOf(Math.floor(ev.x)); if (yi !== S.yi){ stop(); setYear(yi, 600); } if (ev.tier === 1) setTimeout(function(){ spotlight(ev); }, 650); });
     d.addEventListener("mouseenter", function(){ S.hoverEv = i; updateActive(); draw(); drawTL(); });
     d.addEventListener("mouseleave", function(){ S.hoverEv = null; updateActive(); draw(); drawTL(); });
   });
@@ -1369,10 +1552,13 @@ function tlSync(force){
 
 /* ---------- controls ---------- */
 function setYear(yi, dur){
+  var prevYi = S.yi;
   S.yi = Math.max(0, Math.min(NY-1, yi));
   $("year").value = S.yi; $("year-out").textContent = YEARS[S.yi];
   if (S.pin && !edgeMap()[S.pin.k]) S.pin = null;
   updateActive(); go(dur); headline(); refreshInsp(); tlSync(true); banner();
+  if (dur) yearChange(prevYi);
+  fxKick();
 }
 function rerender(){ go(450); headline(); refreshInsp(); sizeKey(); measureDesc(); }
 
@@ -1406,6 +1592,8 @@ $("ev-only").addEventListener("change", function(){ renderEvents(); });
 $("major-only").addEventListener("change", function(ev){ S.majorOnly = ev.target.checked; updateActive(); draw(); headline(); tlSync(true); banner(); });
 $("halflife").addEventListener("input", function(ev){ S.hl = +ev.target.value; $("halflife-out").textContent = HL[S.hl] + " yr"; rerender(); });
 $("min").addEventListener("input", function(ev){ setMin(+ev.target.value); rerender(); });
+$("animate").addEventListener("change", function(ev){ if (ev.target.checked) fxKick(); else fxClear(); });
+$("theme").addEventListener("click", function(){ colCache = {}; });
 $("show-persist").addEventListener("change", function(ev){ S.persist = ev.target.checked; computeTargets(); draw(); });
 
 function useNet(name){
@@ -1464,22 +1652,55 @@ $("theme").addEventListener("click", function(){
   $("theme").textContent = "Theme: " + t;
 });
 
-var lastW = 0;
+var lastW = 0, lastH = 0;
 function onResize(){
-  var w = $("netbox").clientWidth; if (Math.abs(w-lastW) < 2) return; lastW = w;
-  var oldW = G.W; layout();
-  if (G.W !== oldW){ buildNodes(); computeTargets(); curN = tgtN.slice(); curP = tgtP.slice(); Object.keys(tgtE).forEach(function(k){ if (curE[k]) curE[k].w = tgtE[k].w; }); draw(); sizeKey(); }
+  var bx = $("netbox"), w = bx.clientWidth, h = bx.clientHeight;
+  if (Math.abs(w-lastW) < 2 && Math.abs(h-lastH) < 2) return; lastW = w; lastH = h;
+  var oW = G.W, oH = G.H; layout(); fxSize();
+  if (G.W !== oW || G.H !== oH){ buildNodes(); computeTargets(); curN = tgtN.slice(); curP = tgtP.slice(); Object.keys(tgtE).forEach(function(k){ if (curE[k]) curE[k].w = tgtE[k].w; }); draw(); sizeKey(); }
+}
+// network height: the viewport minus the strip under it (min 520 px); phone keeps the fixed-aspect drawing
+function sizeNet(){
+  var bx = $("netbox");
+  if (window.innerWidth < 620){ bx.style.height = ""; return; }
+  var vh = document.fullscreenElement ? document.fullscreenElement.clientHeight - 28 : window.innerHeight - 24;
+  var wide = window.innerWidth >= 1100, strip = wide ? $("tlpanel").offsetHeight + 14 : 0;
+  bx.style.height = Math.max(520, Math.round(vh - strip)) + "px";
 }
 try { new ResizeObserver(onResize).observe($("netbox")); } catch(e){ window.addEventListener("resize", onResize); }
-window.addEventListener("resize", drawTL);
-try { document.fonts.ready.then(drawTL); } catch(e){}
+window.addEventListener("resize", function(){ drawTL(); sizeNet(); });
+try { document.fonts.ready.then(function(){ drawTL(); sizeNet(); }); } catch(e){}
+// full screen on the app shell; hidden where the API is missing, rejection handled
+(function(){
+  var app = $("app"), b = $("fullscreen");
+  if (!(document.fullscreenEnabled && app.requestFullscreen)) return;
+  b.hidden = false;
+  b.addEventListener("click", function(){
+    try {
+      if (document.fullscreenElement){ var x = document.exitFullscreen(); if (x && x.catch) x.catch(function(){}); }
+      else { var q = app.requestFullscreen(); if (q && q.catch) q.catch(function(){}); }
+    } catch(e){}
+  });
+  document.addEventListener("fullscreenchange", function(){
+    b.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen";
+    setTimeout(function(){ drawTL(); sizeNet(); }, 60);
+  });
+})();
+// Events panel collapse
+$("ev-toggle").addEventListener("click", function(){
+  var c = $("evcard").classList.toggle("collapsed");
+  this.textContent = c ? "show" : "hide"; this.setAttribute("aria-expanded", c ? "false" : "true");
+});
 
 /* ---------- init: key network, 2021 ---------- */
 legends();
+sizeNet();
 useNet("key");
 setYear(21, 0);
 measureDesc();
-window.__net = {S:S, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
+fxSize(); fxKick();
+if (!motionOK()){ $("animate").checked = false; $("animate").disabled = true; $("note-anim").textContent = "Motion is off because the system asks for reduced motion; the figure is static."; }
+window.__net = {S:S, fxCount:function(){ return fxCount; }, fxFrame:fxFrame, fxSize:fxSize, spotlight:spotlight, TL:TL, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
 })();
 </script>
 
