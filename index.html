@@ -148,6 +148,7 @@ details.earlier ul{margin:4px 0 0;padding-left:17px}
 .modes{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:10px}
 .modes .cg{flex:1 1 380px}
 .evcard.cur{border-left-color:var(--warn-line);font-weight:700}
+.evcard.fut{color:var(--ink-3);font-weight:400;background:transparent;border-left-color:var(--rule)}
 .mdesc{font-size:12.5px;color:var(--ink-2);margin:0;padding:6px 10px;background:var(--panel-2);border-radius:4px}
 .cg{display:flex;flex-direction:column;gap:4px;flex:1 1 260px;min-width:0}
 .cg-wide{flex:1 1 100%}
@@ -1713,9 +1714,11 @@ function headline(){
   var yi = S.yi, y = YEARS[yi], pub = stockAt(NODES[NI[PUB]]);
   $("hl-year").textContent = (S.win==="cum" ? "2000 to " : "") + curLabel();
   // event cards: this year's events pop in; earlier ones stay listed in a fold
-  var now = TL.filter(function(ev){ return evVis(ev) && Math.floor(ev.x) === y; });
-  var past = TL.filter(function(ev){ return evVis(ev) && Math.floor(ev.x) < y; });
-  var cards = now.map(function(ev){ return "<div class='evcard"+(reduce ? "" : " pop")+(S.time === "smooth" && evMonth(ev) === S.mi ? " cur" : "")+"'><b>"+esc(ev.when)+"</b>"+esc(ev.text)+"</div>"; }).join("");
+  var now = TL.filter(function(ev){ return evVis(ev) && evStat(ev) === "now"; });
+  var later = TL.filter(function(ev){ return evVis(ev) && evStat(ev) === "future" && Math.floor(ev.x) === y; });
+  var past = TL.filter(function(ev){ return evVis(ev) && evStat(ev) === "past"; });
+  var cards = now.map(function(ev){ return "<div class='evcard cur"+(reduce ? "" : " pop")+"'><b>"+esc(ev.when)+"</b>"+esc(ev.text)+"</div>"; }).join("") +
+              later.map(function(ev){ return "<div class='evcard fut'><b>"+esc(ev.when)+"</b>"+esc(ev.text)+" <span class='small' style='margin:0'>(later this year)</span></div>"; }).join("");
   if (past.length) cards += "<details class='earlier'"+(earlierOpen ? " open" : "")+"><summary>Earlier events ("+past.length+")</summary><ul>" +
     past.slice().reverse().map(function(ev){ return "<li><span class='mono'>"+esc(ev.when)+"</span> "+esc(ev.text)+"</li>"; }).join("") + "</ul></details>";
   $("hl-events").innerHTML = cards;
@@ -1898,7 +1901,8 @@ function evVis(ev){ return S.layers[ev.layer] && (!S.majorOnly || ev.tier === 1)
 function evL(ev){ return S.ds === "key" ? ev.lk : ev.lf; }       // lender ids in the active network
 function hlNode(){ return (S.hover && S.hover.t === "n") ? S.hover.id : S.focus; }
 function evStat(ev){
-  if (S.time === "smooth"){ var m = evMonth(ev); return m < S.mi ? "past" : m === S.mi ? "now" : "future"; }
+  // Smooth: current = filed in the playhead month or the two before it; later months of the same year are future
+  if (S.time === "smooth"){ var m = evMonth(ev); return m < S.mi - 2 ? "past" : m <= S.mi ? "now" : "future"; }
   var y = Math.floor(ev.x); return y < YEARS[S.yi] ? "past" : y === YEARS[S.yi] ? "now" : "future";
 }
 // aligned with the slider thumb: year centres (Yearly) or month centres (Smooth)
@@ -2007,7 +2011,7 @@ function drawTL(){
 // lenders outlined on the map: a hovered event row's lenders, otherwise this year's visible events
 function updateActive(){
   activeLenders = {};
-  var list = S.hoverEv != null ? [TL[S.hoverEv]] : TL.filter(function(ev){ return evVis(ev) && Math.floor(ev.x) === YEARS[S.yi]; });
+  var list = S.hoverEv != null ? [TL[S.hoverEv]] : TL.filter(function(ev){ return evVis(ev) && evStat(ev) === "now"; });
   list.forEach(function(ev){ evL(ev).forEach(function(id){ if (NI[id] != null && id !== "Other lenders" || (id === "Other lenders" && S.hoverEv != null)) activeLenders[id] = 1; }); });
 }
 
