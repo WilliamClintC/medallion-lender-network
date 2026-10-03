@@ -444,7 +444,7 @@ svg text{font-family:var(--sans)}
       <h2>Node = holder role</h2>
       <div class="leg" id="leg-roles"></div>
       <div class="nodekey" id="leg-persist"></div>
-      <p class="note" style="margin-top:8px">Node size: circle area = medallions the holder has a lien on at year end.</p>
+      <p class="note" style="margin-top:8px">Node size: circle area = medallions the holder has a lien on at year end; very small books drawn at a minimum size (8 px, or 5 px on all lenders) so they stay visible and clickable. Public is drawn at most 1.3x the largest lender; when capped, a faint dashed circle shows its true size.</p>
       <p class="note">Number under each lender = medallions held at year end (Medallions moved) or share of its book kept (Markov share).</p>
       <p class="note">Public = no open loan on record that year (not yet financed, released, or lapsed); not proof of no debt. Arrows out of it are new loans; arrows into it are exits.</p>
     </section>
@@ -532,6 +532,7 @@ function prep(P){
   DS.stayCum = P.nodes.map(function(n){ var c=0; return n.stay.map(function(v){ c+=v; return c; }); });
   DS.cum = [];   // filled lazily
   DS.big = P.nodes.length > 30;
+  DS.maxLender = Math.max.apply(null, P.nodes.filter(function(n){ return n.id !== PUB; }).map(function(n){ return Math.max.apply(null, n.stock_m); }));
   var pi = DS.NI[PUB];
   DS.LH = P.nodes[pi].start.map(function(v){ return DS.total - v; });                  // lender-held, start of each year
   DS.LHm = P.nodes[pi].stock_m.map(function(v){ return DS.total - v; });              // lender-held, end of each month
@@ -787,6 +788,7 @@ function layout(){
       G.x0 = (W - side)/2; G.y0 = (H - side)/2;
     }
   }
+  G.rs = nodeScale();
   svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
   svg.style.setProperty("--fs", G.fs + "px");
 }
@@ -822,7 +824,28 @@ function layoutNote(){
     (S.layout === "columns" ? "" : " (Columns " + n(c.flow_weighted_length) + ")") + "; large-edge crossings " + q.big_edge_crossings +
     (S.layout === "columns" ? "" : " (Columns " + c.big_edge_crossings + ")") + "; min spacing " + q.min_node_separation.toFixed(3) + ".";
 }
-function radius(stock){ return stock > 0.5 ? Math.max(G.radial ? 2.2 : 3, G.rs*Math.sqrt(stock)) : 2; }
+// area proportional to stock on a scale set by the map box (layout() sets G.rs); floor 8 px (key) or 5 px (all lenders)
+// so small books stay visible and clickable; Public is capped at 1.3x the largest lender's peak radius
+function rMin(){ return (DS.big ? 5 : 8) * (G.ws/0.55 > 0 && G.W < 620 ? 0.8 : 1); }
+function radius(stock, id){
+  if (!(stock > 0.5)) return rMin()*0.6;
+  var r = G.rs*Math.sqrt(stock);
+  if (id === PUB) r = Math.min(r, 1.3*G.rs*Math.sqrt(DS.maxLender));
+  return Math.max(rMin(), r);
+}
+// node scale: the largest lender at its peak reaches 7.5% (key) or 4.5% (all lenders) of the map's shorter side,
+// cut (to no less than 70%) where two nodes at their peaks would overlap in this layout
+function nodeScale(){
+  var side = G.radial ? G.side : Math.min(G.W - G.l - G.r, G.H - G.t - G.b);
+  var k = (DS.big ? 0.045 : 0.075) * side / Math.sqrt(DS.maxLender), bound = k;
+  var pk = NODES.map(function(n){ var v = Math.max.apply(null, n.stock_m); return n.id === PUB ? Math.min(v, 1.69*DS.maxLender) : v; });
+  var pos = NODES.map(function(n){ return [G.radial ? G.x0 + n.fx*G.side : G.l + n.fx*(G.W - G.l - G.r), G.radial ? G.y0 + n.fy*G.side : G.t + n.fy*(G.H - G.t - G.b)]; });
+  for (var i=0;i<NODES.length;i++) for (var j=i+1;j<NODES.length;j++){
+    var d = Math.hypot(pos[i][0]-pos[j][0], pos[i][1]-pos[j][1]), q = Math.sqrt(pk[i]) + Math.sqrt(pk[j]);
+    if (q > 0) bound = Math.min(bound, 0.95*d/q);
+  }
+  return Math.max(0.7*k, bound);
+}
 var MKT_FULL = 0.25;              // a 25% market move draws as wide as a 100% Markov move
 function widthOf(val, p, ms){
   if (S.measure === "p"){ if (p == null) return 0.8; return Math.max(0.8, Math.min(1, p) * 44 * G.ws); }
@@ -881,7 +904,7 @@ var els = {}, nodeEls = [];
 
 function computeTargets(){
   var m = edgeMap(), minv = MINSTEPS[S.minIdx];
-  tgtN = NODES.map(function(n){ return radius(stockAt(n)); });
+  tgtN = NODES.map(function(n){ return radius(stockAt(n), n.id); });
   tgtP = NODES.map(function(n,i){ return loopWidth(i); });
   tgtE = {};
   var shown = [];
@@ -991,6 +1014,21 @@ function go(dur){
 var reduceMQ = null; try { reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)"); } catch(e){}
 function motionOK(){ return !(reduceMQ && reduceMQ.matches); }
 var fx = null, fxc = null, fxMap = {s:1, ox:0, oy:0}, fxRaf = null, fxT0 = null, pulses = [], spot = null, spotT = null, colCache = {};
+// dots: radius about 0.3 x the arrow's drawn width, clamped to 2.4 to 5 screen px (scaled with the label size),
+// drawn with a 1 px halo in the background colour and a slightly darker kind colour; never closer than 2.5 diameters
+function dotR(w){ var sc = fxMap.s/fxMap.dpr, ls = Math.max(1, G.fs/12.5); return Math.max(2.4*ls, Math.min(5*ls, 0.3*w*sc)) / sc; }
+var darkCache = {};
+function darker(c){
+  if (darkCache[c]) return darkCache[c];
+  var m = /^#([0-9a-f]{6})$/i.exec(c.trim()); if (!m) return (darkCache[c] = c);
+  var n = parseInt(m[1], 16), f = 0.82, r = Math.round(((n >> 16) & 255)*f), g = Math.round(((n >> 8) & 255)*f), b = Math.round((n & 255)*f);
+  return (darkCache[c] = "rgb(" + r + "," + g + "," + b + ")");
+}
+function dot(ctx, x, y, r, col){
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832);
+  ctx.fillStyle = col; ctx.fill();
+  ctx.lineWidth = 1/(fxMap.s/fxMap.dpr); ctx.strokeStyle = cssCol("--bg"); ctx.stroke();
+}
 var SPEED = 70, DOT_PER = 40, DOT_MAX = 30, CAP = 420;      // px/s; medallions per dot; dots per edge; dots on screen
 function cssCol(v){ if (!colCache[v]) colCache[v] = getComputedStyle(document.documentElement).getPropertyValue(v).trim() || "#888"; return colCache[v]; }
 function fxSize(){
@@ -1023,23 +1061,23 @@ function fxFrame(ts){
       if (f && c.from !== f && c.to !== f) return;
       if (spot && !(k === spot.k || (spot.ids[c.from] && spot.ids[c.to]))) return;
       var n = Math.max(1, Math.min(DOT_MAX, Math.round(tg.fresh / DOT_PER)));
-      plan.push({P:e.geo.P, n:n, w:c.w, col: c.w >= 6 ? cssCol("--halo") : cssCol("--k-" + tg.dom), a: Math.max(0.35, c.a == null ? 1 : c.a)}); total += n;
+      plan.push({P:e.geo.P, n:n, w:c.w, col: darker(cssCol("--k-" + tg.dom)), a: Math.max(0.45, c.a == null ? 1 : c.a)}); total += n;
     });
     if (S.persist) nodeEls.forEach(function(e, i){
       if (!e.loopOn || !e.lP) return; var st = stayedOf(i); if (!(st > 0)) return;
       if (f && NODES[i].id !== f) return;
       var n = Math.max(1, Math.min(12, Math.round(st / (DOT_PER*3))));
-      plan.push({P:e.lP, n:n, w:curP[i] || 1, col: cssCol("--ink-2"), a: 0.75}); total += n;
+      plan.push({P:e.lP, n:n, w:curP[i] || 1, col: cssCol("--ink-2"), a: 0.8}); total += n;
     });
     var thin = total > CAP ? CAP / total : 1;          // keep the frame cheap on the 104-lender network
     plan.forEach(function(p){
       if (!p.s) p.s = arcTable(p.P);
       var L = p.s[p.s.length-1]; if (L < 4) return;
-      var n = Math.max(1, Math.round(p.n * thin)), r = Math.max(1.5, Math.min(3.2, 0.15*p.w + 1.4)) / (m.s/m.dpr);
-      ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
+      var r = dotR(p.w), n = Math.max(1, Math.min(Math.round(p.n * thin), Math.floor(L / (5*r))));   // spacing >= 2.5 diameters
+      ctx.globalAlpha = p.a;
       for (var j=0;j<n;j++){
         var q = atLen(p.P, p.s, ((t*SPEED) + j*L/n) % L);
-        ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 6.2832); ctx.fill();
+        dot(ctx, q[0], q[1], r, p.col);
       }
     });
     fxCount = total;
@@ -1050,9 +1088,9 @@ function fxFrame(ts){
     burstsOn = burstsOn.filter(function(b){ return (nowB - b.t0)/1000*BURST_SPEED <= b.s[b.s.length-1]; });
     burstsOn.forEach(function(b){
       if (nowB < b.t0) return;
-      var q = atLen(b.P, b.s, (nowB - b.t0)/1000*BURST_SPEED);
-      ctx.globalAlpha = 0.9; ctx.fillStyle = b.col;
-      ctx.beginPath(); ctx.arc(q[0], q[1], b.r / (m.s/m.dpr), 0, 6.2832); ctx.fill();
+      var age = (nowB - b.t0)/1000, q = atLen(b.P, b.s, age*BURST_SPEED);
+      var w = curE[b.k] ? curE[b.k].w : b.w, grow = b.big ? 1 + 0.3*Math.max(0, 1 - age/0.6) : 1;   // big bursts start 1.3x and settle
+      ctx.globalAlpha = 0.95; dot(ctx, q[0], q[1], dotR(w)*grow, b.col);
     });
   }
   fxBurst = burstsOn.length;
@@ -1112,8 +1150,10 @@ function bursts(prevMi){
     var n = Math.max(1, Math.min(BURST_MAX, Math.round(a.v / BURST_PER)));
     if (live + n > BURST_CAP) n = Math.max(1, BURST_CAP - live); if (live >= BURST_CAP) return;
     var geo = e.geo; geo.s = geo.s || arcTable(geo.P);
-    var col = cssCol("--k-" + g), r = Math.max(1.6, Math.min(3.2, 1.3 + Math.sqrt(a.v)/12));
-    for (var j=0;j<n;j++) burstsOn.push({P:geo.P, s:geo.s, t0: now + j*(650/n), col:col, r:r});
+    var col = darker(cssCol("--k-" + g)), w = curE[k] ? curE[k].w : t.w;
+    var L = geo.s[geo.s.length-1], gap = 5*dotR(w);                        // dots of one burst stay 2.5 diameters apart
+    var dt = Math.max(650/n, gap/BURST_SPEED*1000);
+    for (var j=0;j<n;j++) burstsOn.push({P:geo.P, s:geo.s, k:k, w:w, big:a.v >= 200, t0: now + j*dt, col:col});
     live += n;
   });
 }
@@ -1170,6 +1210,7 @@ function buildNodes(){
   NODES.forEach(function(n){
     var g = mk("g", {"class":"node", tabindex:"0", role:"button", "aria-label": n.label}, gN);
     var loop = mk("path", {"class":"sloop"}, g);
+    var full = n.id === PUB ? mk("circle", {fill:"none", stroke:"var(--ink-3)", "stroke-width":1, "stroke-dasharray":"2 4", "stroke-opacity":0.6, "pointer-events":"none"}, g) : null;
     var c = mk("circle", {}, g), ring = mk("circle", {"class":"ring"}, g), evring = mk("circle", {"class":"evring"}, g);
     var t1 = mk("text", {"class":"nlabel"}, g);
     var tn = document.createElementNS(NS, "tspan"); t1.appendChild(tn);
@@ -1186,7 +1227,7 @@ function buildNodes(){
     g.addEventListener("focus", function(){ S.hover={t:"n", id:n.id}; refreshInsp(); applyDim(); });
     g.addEventListener("blur", function(){ S.hover=null; refreshInsp(); applyDim(); });
     var ll = mk("text", {"class":"llabel", "text-anchor":"middle"}, g);
-    nodeEls.push({g:g, c:c, ring:ring, t1:t1, tn:tn, ts:ts, th:th, loop:loop, ll:ll, evring:evring});
+    nodeEls.push({full:full, g:g, c:c, ring:ring, t1:t1, tn:tn, ts:ts, th:th, loop:loop, ll:ll, evring:evring});
   });
 }
 
@@ -1222,6 +1263,7 @@ function draw(){
   NODES.forEach(function(n,i){
     var e = nodeEls[i], x = NX(n), y = NYp(n), r = curN[i];
     e.c.setAttribute("cx", x); e.c.setAttribute("cy", y); e.c.setAttribute("r", r.toFixed(2));
+    if (e.full){ var fr = G.rs*Math.sqrt(stockAt(n)); e.full.style.display = fr > r + 1 ? "" : "none"; e.full.setAttribute("cx", x); e.full.setAttribute("cy", y); e.full.setAttribute("r", fr.toFixed(1)); }
     e.ring.setAttribute("cx", x); e.ring.setAttribute("cy", y); e.ring.setAttribute("r", (r+3).toFixed(2));
     var lw = curP[i], showP = S.persist && lw != null && lw > 0.05;
     e.loop.style.display = showP ? "" : "none"; e.loopOn = showP; e.lext = 0;
@@ -1595,7 +1637,7 @@ function sizeKey(){
   // drawn at half the on-map scale of the current view, so it stays proportional to what is on screen
   var s = $("leg-size"), h = "", x = 14, k = 0.5;
   [100, 1000, 3000].forEach(function(v){
-    var r = G.rs*Math.sqrt(v)*k; h += "<circle cx='"+(x+r)+"' cy='"+(54-r)+"' r='"+r+"' fill='none' stroke='var(--ink-3)'/>";
+    var r = Math.max(rMin(), G.rs*Math.sqrt(v))*k; h += "<circle cx='"+(x+r)+"' cy='"+(54-r)+"' r='"+r+"' fill='none' stroke='var(--ink-3)'/>";
     h += "<text x='"+(x+r)+"' y='67' text-anchor='middle' font-size='10' fill='var(--ink-2)' font-family='var(--mono)'>"+v.toLocaleString("en-US")+"</text>"; x += Math.max(2*r, 22) + 16;
   });
   h += "<text x='14' y='10' font-size='10' fill='var(--ink-3)'>held (half scale)</text>";
@@ -1960,7 +2002,7 @@ $("major-only").addEventListener("change", function(ev){ S.majorOnly = ev.target
 $("halflife").addEventListener("input", function(ev){ S.hl = +ev.target.value; $("halflife-out").textContent = HL[S.hl] + " yr"; rerender(); });
 $("min").addEventListener("input", function(ev){ setMin(+ev.target.value); rerender(); });
 $("animate").addEventListener("change", function(ev){ if (ev.target.checked) fxKick(); else fxClear(); });
-$("theme").addEventListener("click", function(){ colCache = {}; });
+$("theme").addEventListener("click", function(){ colCache = {}; darkCache = {}; });
 $("show-persist").addEventListener("change", function(ev){ S.persist = ev.target.checked; computeTargets(); draw(); });
 
 function useNet(name){
