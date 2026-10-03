@@ -732,7 +732,12 @@ function memStart(i){ memAt(DS, HL[S.hl], 0); return DS.mem[HL[S.hl]].start[i][S
             .replace(/ Federal Credit Union\b/g, " FCU").replace(/ Credit Union\b/g, " CU").replace(/ National Association\b/g, "")
             .replace(/ Of /g, " of ").replace(/ And$/, "").replace(/\s+/g, " ").trim();
   };
-  RAW.full.nodes.forEach(function(n){ n.label = kl[n.id] && n.id !== "BGW / S&R" ? kl[n.id] : tidy(n.label); });
+  var shorten = function(s){             // long names: drop generic middle words so the map never truncates
+    if (s.length <= 24) return s;
+    s = s.replace(/ Financial /, " ").replace(/ Cooperative /, " ").replace(/ International /, " Intl ").replace(/ Eastern Region /, " ").replace(/ Discount Bank of New York$/, " Discount Bank");
+    return s;
+  };
+  RAW.full.nodes.forEach(function(n){ n.label = kl[n.id] && n.id !== "BGW / S&R" ? kl[n.id] : shorten(tidy(n.label)); });
 })();
 var NETS = {key: prep(RAW.key), full: prep(RAW.full)};
 // Independent / Fleet: the key network rebuilt from stage 255's by_type (monthly rows summed to years; nodes' own stocks)
@@ -967,10 +972,10 @@ function layout(){
     var k = Math.min(1.7, Math.min(W/1000, H/650));                  // size scale against the old 1000 x 650 design
     var fs = Math.max(12, Math.min(16, 12.5*Math.sqrt(Math.max(k, 0.6))));
     if (!DS.radial){
-      G = {W:W, H:H, l:Math.max(80, fs*(S.layout === "flow" ? 9 : 7)), r:Math.max(80, fs*(S.layout === "flow" ? 9 : 7)), t:fs*4.2, b:fs*(S.layout === "flow" ? 7.5 : 5.2), rs:(DS.big ? 0.42 : 0.55)*k, ws:0.55*k, fs:fs, radial:false, maxc:DS.big ? 24 : 0};
+      G = {W:W, H:H, l:Math.max(80, fs*(S.layout === "flow" ? 9 : 7)), r:Math.max(80, fs*(S.layout === "flow" ? 9 : 7)), t:fs*4.2, b:fs*(S.layout === "flow" ? 7.5 : 5.2), rs:(DS.big ? 0.42 : 0.55)*k, ws:0.55*k, fs:fs, radial:false, maxc:DS.big ? 32 : 0};
     } else {
       var pad = fs*16, side = Math.max(320, Math.min(W - 2*pad, H - fs*6)), kr = side/760;
-      G = {W:W, H:H, side:side, rs:0.42*kr, ws:0.50*kr, fs:fs, radial:true, maxc:30};
+      G = {W:W, H:H, side:side, rs:0.42*kr, ws:0.50*kr, fs:fs, radial:true, maxc:32};
       G.x0 = (W - side)/2; G.y0 = (H - side)/2;
     }
   }
@@ -1200,7 +1205,7 @@ function computeTargets(){
       .sort(function(a,b){ return stockAt(NODES[b])-stockAt(NODES[a]); })
       .forEach(function(i){
         var b = labelBox(i);
-        if (placed.some(function(o){ return b[0]<o[2] && b[2]>o[0] && b[1]<o[3] && b[3]>o[1]; })) delete labelSet[NODES[i].id];
+        if (placed.some(function(o){ return b[0]-6<o[2] && b[2]+6>o[0] && b[1]-3<o[3] && b[3]+3>o[1]; })) delete labelSet[NODES[i].id];
         else placed.push(b);
       });
   }
@@ -1588,7 +1593,6 @@ function draw(){
     els[k].geo = geo;
   });
   gL.innerHTML = "";
-  drawCallout();
   // obstacles: every node circle and every visible node label (approximate boxes), then placed edge labels
   var boxes = [], cw = G.fs*0.62;
   NODES.forEach(function(n,i){
@@ -1605,9 +1609,9 @@ function draw(){
   });
   function hits(b){ return boxes.some(function(o){ return b[0]<o[2] && b[2]>o[0] && b[1]<o[3] && b[3]>o[1]; }); }
   // self-loop labels are obstacles too
-  nodeEls.forEach(function(ne){ if (ne.loopOn && ne.ll.style.display !== "none" && ne.ll.textContent){
-    var x = +ne.ll.getAttribute("x"), y = +ne.ll.getAttribute("y"), w = ne.ll.textContent.length*G.fs*0.5;
-    boxes.push([x-w/2-2, y-G.fs*0.8, x+w/2+2, y+G.fs*0.3]); } });
+  nodeEls.forEach(function(ne){ if (ne.loopOn && ne.ll.textContent){
+    var x = +ne.ll.getAttribute("x"), y = +ne.ll.getAttribute("y"), w = textW(ne.ll.textContent, false, G.fs*0.8, getComputedStyle(document.documentElement).getPropertyValue("--mono"))*1.08;
+    boxes.push([x-w/2-5, y-G.fs*0.9, x+w/2+5, y+G.fs*0.4]); } });
   var all = S.labelAll, keys = labelKeys(), fsz = all ? Math.max(10.5, Math.min(11.5, G.fs*0.85)) : null;
   keys.forEach(function(k, li){
     var e = els[k], t = tgtE[k]; if (!e || !e.geo || !t) return;
@@ -1632,6 +1636,17 @@ function draw(){
         for (var m=3; m<=9; m++) if (tryAt(tt, side, m)){ leader = true; return true; }
         return false; }); });
     }
+    if (!best && (all || li === 0)){                     // still nothing: search rings around the midpoint, leader line back
+      var mp = qpt(g.A,g.C,g.B,0.5);
+      for (var rr = 30; rr <= 260 && !best; rr += 18){
+        for (var q = 0; q < 16; q++){
+          var ang = q/16*2*Math.PI, x = mp[0] + rr*Math.cos(ang), y = mp[1] + rr*Math.sin(ang);
+          var bq = [x-tw/2-2, y-hh, x+tw/2+2, y+hh];
+          if (x - tw/2 < 4 || x + tw/2 > G.W - 4 || y < 14 || y > G.H - 8 || hits(bq)) continue;
+          best = [x, y, bq]; anchor = mp; leader = true; break;
+        }
+      }
+    }
     if (!best && (all || li === 0)){ best = first; leader = true; }   // never drop a label when all are asked for
     if (!best) return;
     boxes.push(best[2]);
@@ -1651,6 +1666,7 @@ function draw(){
       bt.style.fontSize = bfs + "px"; bt.style.fontWeight = 500; bt.textContent = btx;
     }
   });
+  drawCallout(boxes, hits);
   $("hint").textContent = DS.big ? (all && !S.focus && !hoverNode() ? (S.measure === "m" ? "Labels: arrows with 1%+ of the market. " : S.measure === "p" ? "Labels: arrows with share 5%+. " : "Labels: arrows with 25+ medallions. ") + "Click a lender to see all its shares" : "Hover a node to see its name") : "";
   applyDim();
 }
@@ -2027,7 +2043,7 @@ function sizeKey(){
 /* ---------- first-visit callout on Melrose's self-loop (2021, key network) ---------- */
 var calloutOn = true;
 try { calloutOn = localStorage.getItem("fig112-callout") !== "0"; } catch(e){}
-function drawCallout(){
+function drawCallout(boxes, hits){
   var old = document.getElementById("callout"); if (old) old.remove();
   var mi = NI["Melrose CU"];
   if (!calloutOn || S.ds !== "key" || YEARS[S.yi] !== 2021 || !S.persist || mi == null || NODES[mi].p_stay[S.yi] == null) return;
@@ -2035,17 +2051,30 @@ function drawCallout(){
   var txt = "Loop = share of its book Melrose kept in 2021: " + pct(n.p_stay[S.yi]).replace("&gt;", ">");
   var tw = textW(txt, false, G.fs) + 14, bh = G.fs + 12;
   var ax = ne && ne.lapex ? ne.lapex[0] : x - r, ay = ne && ne.lapex ? ne.lapex[1] : y;
-  var bx = Math.max(4, x - 20), by = y + r + G.fs*2.4 + 4;          // below the node's two-line label, clear of the banner
-  if (bx + tw + 24 > G.W) bx = G.W - tw - 30;
-  if (by < 4) by = 4;
+  // candidate places around Melrose (below, above, either side, then further out); first one clear of node
+  // labels, arrow labels and the banner wins, with a leader line to the loop
+  var obst = (boxes || []).slice();
+  if ($("banner").classList.contains("on")){ var bb = $("banner").getBoundingClientRect(), sb = svg.getBoundingClientRect(), k = G.W / Math.max(1, sb.width);
+    obst.push([(bb.left - sb.left)*k - 6, (bb.top - sb.top)*k - 6, (bb.right - sb.left)*k + 6, (bb.bottom - sb.top)*k + 6]); }
+  var clear = function(b){ return !obst.some(function(o){ return b[0]<o[2] && b[2]>o[0] && b[1]<o[3] && b[3]>o[1]; }); };
+  var W2 = tw + 22, cands = [], d = r + G.fs*2.6;
+  [1, 1.6, 2.3, 3.2].forEach(function(f){
+    [[-20, d*f], [-W2 + 20, d*f], [-20, -d*f - bh], [-W2/2, d*f], [r*f + 14, -bh/2], [-W2 - r*f - 14, -bh/2], [r*f + 14, d*f*0.6], [-W2 - r*f - 14, d*f*0.6]].forEach(function(o){ cands.push([x + o[0], y + o[1]]); });
+  });
+  var pick = null;
+  cands.some(function(c){ var bx0 = Math.max(4, Math.min(G.W - W2 - 4, c[0])), by0 = Math.max(4, Math.min(G.H - bh - 4, c[1]));
+    if (clear([bx0 - 2, by0 - 2, bx0 + W2 + 2, by0 + bh + 2])){ pick = [bx0, by0]; return true; } return false; });
+  if (!pick) pick = [Math.max(4, Math.min(G.W - W2 - 4, x - 20)), Math.min(G.H - bh - 4, y + d)];
+  var bx = pick[0], by = pick[1];
   var g = mk("g", {"class":"callout", id:"callout"}, gL);
-  mk("line", {x1:ax.toFixed(1), y1:ay.toFixed(1), x2:(bx + 12).toFixed(1), y2:by.toFixed(1), stroke:"var(--ink-2)", "stroke-width":1.2}, g);
+  var lx = Math.max(bx, Math.min(bx + W2, ax)), ly = ay < by ? by : by + bh;
+  mk("line", {x1:ax.toFixed(1), y1:ay.toFixed(1), x2:lx.toFixed(1), y2:ly.toFixed(1), stroke:"var(--ink-2)", "stroke-width":1.2}, g);
   mk("rect", {"class":"cbox", x:bx.toFixed(1), y:by.toFixed(1), width:(tw + 22).toFixed(1), height:bh, rx:4}, g);
   var t = mk("text", {x:(bx + 7).toFixed(1), y:(by + bh/2 + G.fs*0.36).toFixed(1)}, g); t.textContent = txt;
   var cx = mk("g", {"class":"cx", role:"button", tabindex:"0", "aria-label":"Dismiss this note"}, g);
   mk("rect", {x:(bx + tw + 2).toFixed(1), y:by.toFixed(1), width:20, height:bh, fill:"transparent"}, cx);
   var xt = mk("text", {x:(bx + tw + 8).toFixed(1), y:(by + bh/2 + G.fs*0.36).toFixed(1)}, cx); xt.textContent = "x";
-  var dismiss = function(ev){ ev.stopPropagation(); calloutOn = false; try { localStorage.setItem("fig112-callout", "0"); } catch(e){} drawCallout(); };
+  var dismiss = function(ev){ ev.stopPropagation(); calloutOn = false; try { localStorage.setItem("fig112-callout", "0"); } catch(e){} drawCallout(); draw(); };
   cx.addEventListener("click", dismiss);
   cx.addEventListener("keydown", function(ev){ if (ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); dismiss(ev); } });
 }
@@ -2158,10 +2187,11 @@ function drawTL(){
   h += "<rect x='"+ya.toFixed(1)+"' y='"+bandTop+"' width='"+(yb-ya).toFixed(1)+"' height='"+(axisY-bandTop-10)+"' fill='var(--ink)' fill-opacity='0.07'/>";
   h += "<line x1='"+px.toFixed(1)+"' x2='"+px.toFixed(1)+"' y1='"+bandTop+"' y2='"+(axisY-10)+"' stroke='var(--ink)' stroke-width='1.5'/>";
   h += "<line x1='0' x2='"+W+"' y1='"+tickY+"' y2='"+tickY+"' stroke='var(--rule)'/>";
-  for (var yr=2000; yr<=2025; yr++){
-    var tx = tlX(yr+0.5, W);
-    h += "<line x1='"+tx.toFixed(1)+"' x2='"+tx.toFixed(1)+"' y1='"+(axisY-8)+"' y2='"+(axisY-4)+"' stroke='var(--ink-3)'/>";
-    if (yr % 5 === 0) h += "<text x='"+tx.toFixed(1)+"' y='"+(axisY+6)+"' font-size='10' text-anchor='"+(yr===2000 ? "start" : yr===2025 ? "end" : "middle")+"' fill='var(--ink-3)' font-family='var(--mono)'>"+yr+"</text>";
+  // year axis on the same x-scale as events and playhead: a tick at 1 January of each year, label left-aligned at its tick
+  for (var yr=2000; yr<=2026; yr++){
+    var tx = Math.max(1, tlX(yr, W)), maj = yr % 5 === 0;
+    h += "<line class='yrtick' data-y='"+yr+"' x1='"+tx.toFixed(1)+"' x2='"+tx.toFixed(1)+"' y1='"+(axisY-(maj ? 11 : 8))+"' y2='"+(axisY-3)+"' stroke='var(--ink-3)'/>";
+    if (maj && yr < 2026) h += "<text x='"+(tx+2).toFixed(1)+"' y='"+(axisY+6)+"' font-size='10' text-anchor='start' fill='var(--ink-3)' font-family='var(--mono)'>"+yr+"</text>";
   }
   // ticks, leader lines and labels: all leaders first, then dots, then labels on an opaque backing,
   // so a leader passing behind a label is interrupted instead of crossing its text
@@ -2734,7 +2764,7 @@ measureDesc();
 fxSize(); fxKick();
 $("year").max = DS.NM - 1; setMonth(S.mi, 0);
 if (!motionOK()){ $("animate").checked = false; $("animate").disabled = true; $("note-anim").textContent = "Motion is off because the system asks for reduced motion; the figure is static."; }
-window.__net = {fxDrawn:function(){ return fxDrawn; }, S:S, setMonth:setMonth, setTime:setTime, setLayout:setLayout, fxBurst:function(){ return fxBurst; }, fxCount:function(){ return fxCount; }, fxFrame:fxFrame, fxSize:fxSize, spotlight:spotlight, TL:TL, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
+window.__net = {tlX:function(x){ return tlX(x, Math.max($("tlscroll").clientWidth || 900, 900)); }, fxDrawn:function(){ return fxDrawn; }, S:S, setMonth:setMonth, setTime:setTime, setLayout:setLayout, fxBurst:function(){ return fxBurst; }, fxCount:function(){ return fxCount; }, fxFrame:fxFrame, fxSize:fxSize, spotlight:spotlight, TL:TL, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
 })();
 </script>
 
