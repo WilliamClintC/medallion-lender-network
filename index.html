@@ -337,10 +337,10 @@ svg text{font-family:var(--sans)}
       <div class="grp">
         <label class="glbl" for="halflife">Half-life</label>
         <span style="display:inline-flex;flex-direction:column">
-          <input type="range" id="halflife" min="0" max="7" step="1" value="1" style="width:150px;margin:0;accent-color:var(--ink)" aria-describedby="halflife-out">
+          <input type="range" id="halflife" min="0" max="7" step="1" value="2" style="width:150px;margin:0;accent-color:var(--ink)" aria-describedby="halflife-out">
           <span class="stops" aria-hidden="true"><span>.5</span><span>1</span><span>2</span><span>3</span><span>5</span><span>7</span><span>10</span><span>15</span></span>
         </span>
-        <output id="halflife-out" class="mono" for="halflife">1 yr</output>
+        <output id="halflife-out" class="mono" for="halflife">2 yr</output>
       </div>
       <p class="note" id="note-hl"></p>
     </div>
@@ -368,10 +368,11 @@ svg text{font-family:var(--sans)}
     <div class="cg">
       <div class="grp">
         <label class="glbl" for="min">Min. flow</label>
-        <input type="range" id="min" min="0" max="8" step="1" value="3" aria-describedby="min-out">
-        <output id="min-out" class="mono" for="min">&ge; 5</output>
+        <input type="range" id="min" min="0" max="8" step="1" value="4" aria-describedby="min-out">
+        <output id="min-out" class="mono" for="min">&ge; 10</output>
       </div>
       <p class="note">Hides arrows that move fewer than this many medallions, in both width modes, so the big moves stand out. Hidden flows still count in the inspector and in holdings.</p>
+      <p class="note">Default 10: about 34 arrows a year carrying 90% of moved medallions (key network); 43 arrows, 69% (all lenders).</p>
     </div>
   </div>
 
@@ -465,7 +466,7 @@ svg text{font-family:var(--sans)}
       <li>Persistence = share of the start-of-year book still with the same holder at year end; moves within "Other lenders" count as staying.</li>
       <li>Self-loop: arrow from a holder back to itself; width = the share (Markov share) or number (Medallions moved) of its start-of-year book that stayed, on the same scale as the outgoing arrows.</li>
       <li>Self-loops stay year-specific in every window, including Memory and Since 2000.</li>
-      <li>Memory: each year's moves count half as much after every half-life (default 1 year), so recent moves are drawn strongest.</li>
+      <li>Memory: each year's moves count half as much after every half-life (default 2 years), so recent moves are drawn strongest.</li>
       <li>Memory colour strength = recency of the edge's last big year (a year carrying at least 20% of its largest single-year flow); it halves every 1.5 years after that year, at any half-life.</li>
       <li>Memory share = decayed moves &divide; the sender's decayed start-of-year books (same half-life).</li>
       <li>Timeline dates come from the project registries (<span class="mono">_timeline.py</span>, stages 229 and 232); stage 232 wins where they differ. MRP dates and the 2023 PenFed re-filing are from the project timeline notes.</li>
@@ -510,7 +511,7 @@ var ROLES = [
 var NOUN = {assigned:"sales", refinanced:"refinancing", new_loan:"new loans", exit:"exits", merge:"merger or co-loan"};
 var ROLELABEL = {}; ROLES.forEach(function(r){ ROLELABEL[r.k]=r.label; });
 var MINSTEPS = [0,1,2,5,10,25,50,100,250];
-var MIN_DEFAULT = {key:3, full:4};
+var MIN_DEFAULT = {key:4, full:4};       // index of 10 medallions in MINSTEPS, both networks
 var PUB = "No open lien";            // node id of the Public node in both files
 
 /* ---------- unpack and precompute one network ---------- */
@@ -593,7 +594,7 @@ var NETS = {key: prep(RAW.key), full: prep(RAW.full)};
 var DS = NETS.key, YEARS = DS.years, NY = YEARS.length, NODES = DS.nodes, NI = DS.NI;
 
 /* ---------- state ---------- */
-var S = {time:"smooth", mi:252, layout:"hub", labelAll:false, persist:true, hl:1, ds:"key", yi:21, measure:"n", win:"mem", kinds:{}, minIdx:MIN_DEFAULT.key, focus:null, hover:null, pin:null};
+var S = {time:"smooth", mi:252, layout:"hub", labelAll:false, persist:true, hl:2, ds:"key", yi:21, measure:"n", win:"mem", kinds:{}, minIdx:MIN_DEFAULT.key, focus:null, hover:null, pin:null};
 GROUPS.forEach(function(g){ S.kinds[g.k]=true; });
 var reduce = false;
 try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){}
@@ -1660,14 +1661,14 @@ function measureDesc(){
   // Window note, with a decay example read from the data
   var W = {
     year: "This year: only moves made in the selected year.",
-    mem: "Memory: past moves fade with the half-life, so recent moves are bold and older ones linger, paler. Melrose &rarr; DePalma moved "+fmt(Math.round(mel.total))+" in 2021; at a 1-year half-life that counts "+fmt(Math.round(mel.total/2))+" in 2022 and "+fmt(Math.round(mel.total/4))+" in 2023.",
+    mem: "Memory: past moves fade with the half-life, so recent moves are bold and older ones linger, paler. Melrose &rarr; DePalma moved "+fmt(Math.round(mel.total))+" in 2021; at the default 2-year half-life that counts "+fmt(Math.round(mel.total*Math.SQRT1_2))+" in 2022 and "+fmt(Math.round(mel.total/2))+" in 2023.",
     cum: "Since 2000: every move from 2000 to the selected year added up, no fading."
   };
   $("note-window").innerHTML = W[S.win];
   var mi = K.NI["Melrose CU"], y21 = K.years.indexOf(2021);
   $("note-persist").innerHTML = "Self-loop = an arrow from a holder back to itself: the part of its start-of-year book still with it at year end. Under Markov share, loop + outgoing arrows = 100% (one row of the transition matrix). Melrose's loop shrinks to "+pct(K.nodes[mi].p_stay[y21])+" in 2021, when its book was sold. Loops stay year-specific in every window.";
   var y25 = K.years.indexOf(2025), ag = 2025 - 2021;
-  $("note-hl").innerHTML = "How fast past moves fade: after one half-life a move counts half, after two a quarter. At 10 to 15 years almost nothing fades, so Memory approaches Since 2000: at 10 years the "+fmt(Math.round(mel.total))+" Melrose &rarr; DePalma medallions of 2021 still count "+fmt(Math.round(mel.total*Math.pow(0.5, ag/10)))+" in 2025 (at 1 year: "+fmt(Math.round(mel.total*Math.pow(0.5, ag/1)))+").";
+  $("note-hl").innerHTML = "How fast past moves fade, default 2 years: a move counts 71% a year later, 50% after two, 25% after four. At 10 to 15 years almost nothing fades, so Memory approaches Since 2000: at 10 years the "+fmt(Math.round(mel.total))+" Melrose &rarr; DePalma medallions of 2021 still count "+fmt(Math.round(mel.total*Math.pow(0.5, ag/10)))+" in 2025 (at 1 year: "+fmt(Math.round(mel.total*Math.pow(0.5, ag/1)))+").";
   $("note-ds").innerHTML = "Key lenders ("+NETS.key.nodes.length+"): the "+(NETS.key.nodes.length-2)+" largest lender families by peak book or by size of their 2017 to 2022 sales, plus Other lenders and Public. All lenders ("+NETS.full.nodes.length+"): every family that moved 50 or more medallions over 2000 to 2025 (94% of all moved medallions), plus Other lenders and Public.";
 }
 
