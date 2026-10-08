@@ -160,13 +160,17 @@ details.earlier ul{margin:4px 0 0;padding-left:17px}
 .notelist b{font-weight:600;color:var(--ink-2)}
 .mdesc.note{max-width:none}
 .notes-off .note{display:none}
-#speed button{padding:4px 8px;font-size:12.5px;border:0;border-radius:0;background:var(--panel);cursor:pointer}
-#speed button+button{border-left:1px solid var(--rule)}
-#speed button[aria-pressed="true"]{background:var(--panel-2);font-weight:600}
+.spd{display:inline-flex;align-items:center;gap:8px}
+.spdtrack{position:relative;width:200px;padding-bottom:14px}
+#speed{width:100%;margin:0;accent-color:var(--ink)}
+.spdticks{position:absolute;left:0;right:0;top:20px;height:12px}
+.spdticks span{position:absolute;transform:translateX(-50%);font:10px var(--mono);color:var(--ink-3);white-space:nowrap}
+.spdticks span::before{content:"";position:absolute;left:50%;top:-5px;width:1px;height:4px;background:var(--ink-3)}
+#speed-out{min-width:3.6em;cursor:pointer;user-select:none}
+@media (max-width:620px){.spdtrack{width:150px} #speed{height:28px} #speed::-webkit-slider-thumb{width:22px;height:22px} #speed::-moz-range-thumb{width:22px;height:22px}}
 .mdesc ul{margin:0;padding-left:16px}
 #min{width:120px;accent-color:var(--ink)}
 .yr{font:600 18px var(--mono);min-width:3.2em;font-variant-numeric:tabular-nums}
-#speed{flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:var(--panel)}
 .seg label{display:flex;align-items:center;gap:4px;padding:4px 9px;cursor:pointer;font-size:13px;position:relative}
 .seg label+label{border-left:1px solid var(--rule)}
@@ -271,6 +275,27 @@ svg text{font-family:var(--sans)}
 .kst tr.cut td{border-top:2px dashed var(--ink-3)}
 .kst tr.out td{color:var(--ink-3)}
 .tools{margin-top:6px}
+body.simple .adv{display:none !important}
+#simplebar,#sb-note{display:none}
+body.simple #simplebar{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:6px 10px;margin-top:6px;background:var(--panel);border:1px solid var(--rule);border-radius:6px}
+body.simple #sb-note{display:block;margin:3px 2px 0;font-size:12px}
+#simplebar .sbg{display:flex;align-items:center;gap:6px;min-width:0}
+#simplebar .sbslide{flex:1 1 260px;min-width:200px}
+#simplebar .slidewrap{flex:1 1 auto;min-width:150px}
+#simplebar .yr{font-size:15px}
+#simplebar .spdtrack{width:200px}
+body.simple .sub,body.simple .tltop,body.simple #tlpanel .note,body.simple .tools,body.simple .app .ctrl{display:none !important}
+body.simple .wrap{padding-top:10px}
+body.simple h1{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.simple .top{align-items:center;flex-wrap:nowrap}
+body.simple .top > div:first-child{min-width:0;flex:1 1 auto}
+body.simple .nodollar{margin:5px 0 0;padding:1px 10px;font-size:13px;border-left-width:3px}
+body.simple .app{margin-top:8px}
+body:not(.simple) .simple-only{display:none !important}
+body.simple .mdesc li:not(:first-child){display:none}
+body.simple #note-ds{display:none}
+body.simple .tools{margin-top:4px}
+#hlgrp.adv[hidden]{display:none}
 .oplegend{position:absolute;right:10px;bottom:26px;z-index:2;background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:5px 8px;font-size:11.5px;color:var(--ink-2);display:none;max-width:300px}
 .oplegend.on{display:block}
 .oplegend .bar{height:10px;border-radius:2px;margin:4px 0 2px}
@@ -327,7 +352,11 @@ body.capture #tlscroll{max-height:none}
         <label><input type="radio" name="ds" id="ds-key" value="key" checked><span id="ds-key-lbl">Key lenders</span></label>
         <label><input type="radio" name="ds" id="ds-full" value="full"><span id="ds-full-lbl">All lenders</span></label>
       </div>
-      <button class="btn" id="explain" type="button" aria-pressed="true">Hide explanations</button>
+      <div class="seg big" role="radiogroup" aria-label="Interface">
+        <label><input type="radio" name="uimode" id="ui-simple" value="simple" checked><span>Simple</span></label>
+        <label><input type="radio" name="uimode" id="ui-advanced" value="advanced"><span>Advanced</span></label>
+      </div>
+      <button class="btn adv" id="explain" type="button" aria-pressed="true">Hide explanations</button>
       <button class="btn" id="fullscreen" type="button" hidden>Full screen</button>
       <button class="btn" id="theme" type="button" aria-label="Switch colour theme">Theme: auto</button>
     </div>
@@ -338,12 +367,13 @@ body.capture #tlscroll{max-height:none}
       <label class="glbl" for="search">Find a lender</label>
       <input id="search" type="search" list="search-list" placeholder="Type a name" autocomplete="off" style="padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);min-width:220px">
       <datalist id="search-list"></datalist>
-      <button class="btn" id="show-matrix" type="button" aria-pressed="false">Show matrix</button>
-      <button class="btn" id="show-compare" type="button" aria-pressed="false">Compare two years</button>
-      <label class="chk"><input type="checkbox" id="show-conc">Show concentration</label>
+      <button class="btn adv" id="show-matrix" type="button" aria-pressed="false">Show matrix</button>
+      <button class="btn adv" id="show-compare" type="button" aria-pressed="false">Compare two years</button>
+      <label class="chk adv"><input type="checkbox" id="show-conc">Show concentration</label>
+      <button type="button" class="linkbtn simple-only" id="more-controls">More controls</button>
     </div>
   </div>
-  <div class="modes">
+  <div class="modes adv">
     <div class="cg">
       <div class="grp">
         <span class="glbl" id="time-lbl">Time</span>
@@ -388,6 +418,8 @@ body.capture #tlscroll{max-height:none}
       <p class="note" id="note-mtype"></p>
     </div>
   </div>
+  <div id="simplebar" role="group" aria-label="Main controls"></div>
+  <p class="note" id="sb-note"></p>
   <p class="nodollar"><b>No dollar amounts.</b> Every number is a count of medallions (fractional where a loan is shared), not loan dollars. UCC filings record no loan principal.</p>
 
   <div class="app" id="app">
@@ -403,7 +435,7 @@ body.capture #tlscroll{max-height:none}
       </div>
       <div class="mdesc note" id="measure-desc" aria-live="polite"></div>
     </div>
-    <div class="cg">
+    <div class="cg adv">
       <div class="grp">
         <span class="glbl" id="window-lbl">Window</span>
         <div class="seg" role="radiogroup" aria-labelledby="window-lbl">
@@ -414,7 +446,7 @@ body.capture #tlscroll{max-height:none}
       </div>
       <p class="note" id="note-window" aria-live="polite"></p>
     </div>
-    <div class="cg" id="hlgrp">
+    <div class="cg adv" id="hlgrp">
       <div class="grp">
         <label class="glbl" for="halflife">Half-life</label>
         <span style="display:inline-flex;flex-direction:column">
@@ -425,7 +457,7 @@ body.capture #tlscroll{max-height:none}
       </div>
       <p class="note" id="note-hl"></p>
     </div>
-    <div class="cg">
+    <div class="cg adv">
       <div class="grp">
         <label class="chk"><input type="checkbox" id="show-persist" checked>Show self-loops (persistence)</label>
         <label class="chk"><input type="checkbox" id="animate" checked>Animate flows</label>
@@ -436,7 +468,7 @@ body.capture #tlscroll{max-height:none}
       <p class="note" id="note-lapse"></p>
       <p class="note" id="note-anim">Moving dots travel in the direction of the move; more dots = more medallions. Only this year's moves carry dots, so faded older moves sit still.</p>
     </div>
-    <div class="cg cg-wide">
+    <div class="cg cg-wide adv">
       <div class="grp" id="kinds" role="group" aria-labelledby="kinds-lbl">
         <span class="glbl" id="kinds-lbl">Kinds</span>
       </div>
@@ -448,7 +480,7 @@ body.capture #tlscroll{max-height:none}
         <li><b>Merger or co-loan closed:</b> the lender merged into another (Progressive into PenFed, Montauk into Bethpage), or one lender's share of a shared loan closed.</li>
       </ul>
     </div>
-    <div class="cg">
+    <div class="cg adv">
       <div class="grp">
         <label class="glbl" for="min">Min. flow</label>
         <input type="range" id="min" min="0" max="8" step="1" value="4" aria-describedby="min-out">
@@ -480,19 +512,20 @@ body.capture #tlscroll{max-height:none}
         <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
         <button class="btn" id="prev" type="button" aria-label="Previous year">&lsaquo;</button>
         <button class="btn" id="next" type="button" aria-label="Next year">&rsaquo;</button>
-        <div class="seg" id="speed" role="group" aria-label="Play speed">
-          <button type="button" id="speed-0125" data-s="0.125" aria-pressed="false">0.125x</button>
-          <button type="button" id="speed-025" data-s="0.25" aria-pressed="false">0.25x</button>
-          <button type="button" id="speed-05" data-s="0.5" aria-pressed="false">0.5x</button>
-          <button type="button" id="speed-1" data-s="1" aria-pressed="true">1x</button>
-          <button type="button" id="speed-2" data-s="2" aria-pressed="false">2x</button>
-          <button type="button" id="speed-4" data-s="4" aria-pressed="false">4x</button>
+        <div class="spd">
+          <span class="glbl" id="speed-lbl">Speed</span>
+          <div class="spdtrack">
+            <input type="range" id="speed" min="0" max="1000" step="1" value="571" aria-labelledby="speed-lbl" aria-describedby="speed-note" aria-valuetext="1x">
+            <div class="spdticks" id="speed-ticks" aria-hidden="true"></div>
+          </div>
+          <output id="speed-out" class="mono" for="speed" title="Double-click to reset to 1x">1x</output>
         </div>
         <output id="year-out" class="yr" for="year">2021</output>
         <span class="small" style="margin:0">Timeline: hover an event for its source; click to jump to its year</span>
+        <p class="note" id="speed-note" style="flex-basis:100%">Drag for any speed; it snaps to 0.125x-4x marks (hold Alt/Option to stop snapping).</p>
       </div>
       <div class="slidewrap"><input type="range" id="year" min="0" max="25" step="1" value="21" aria-label="Year"><div class="thinhatch" aria-hidden="true"><span>thin record</span></div></div>
-      <div class="tllayers" id="tl-layers" role="group" aria-label="Event layers"><span class="glbl">Events</span><label class="chk"><input type="checkbox" id="major-only">Major only</label></div>
+      <div class="tllayers adv" id="tl-layers" role="group" aria-label="Event layers"><span class="glbl">Events</span><label class="chk"><input type="checkbox" id="major-only">Major only</label></div>
       <p class="note">Large type = major events: the sales of 250+ medallions (Capital One, Signature, Melrose and LOMTO to DePalma), the Melrose and LOMTO wind-up, Doral (the first lender failure), and the market turning points (Uber, price peak, COVID, MRP closings). Everything else is minor, in small type beneath. Each event is named on the strip and coloured by layer. Hover or click a lender on the map to highlight its events (the rest dim); click an event to jump to its year. "Book turns bad" (off by default) is each lender's first sign of trouble in its own filings (stage 232).</p>
       <div class="concstrip" id="concstrip" hidden></div>
       <div id="tlscroll"><svg id="tl" role="group" aria-label="Event timeline, 2000 to 2025" viewBox="0 0 1000 70"></svg></div>
@@ -558,17 +591,17 @@ body.capture #tlscroll{max-height:none}
     <section class="card">
       <h2>Node = holder role</h2>
       <div class="leg" id="leg-roles"></div>
-      <div class="nodekey" id="leg-persist"></div>
+      <div class="nodekey adv" id="leg-persist"></div>
       <p class="note" style="margin-top:8px">Node size: circle area = medallions the holder has a lien on at year end; very small books drawn at a minimum size (8 px, or 5 px on all lenders) so they stay visible and clickable. Public is drawn at most 1.3x the largest lender; when capped, a faint dashed circle shows its true size.</p>
       <p class="note" id="note-broker"></p>
       <p class="note">Number under each lender = medallions held at year end (Medallions moved) or share of its book kept (Markov share).</p>
       <p class="note">Public = no open loan on record that year (not yet financed, released, or lapsed); not proof of no debt. Arrows out of it are new loans; arrows into it are exits.</p>
     </section>
-    <section class="card" id="keysel-card">
+    <section class="card adv" id="keysel-card">
       <h2>Who counts as a key lender</h2>
       <div id="keysel"></div>
     </section>
-    <section class="card">
+    <section class="card adv">
       <h2>Size keys</h2>
       <svg id="leg-size" viewBox="0 0 300 70" width="100%" style="max-width:340px;display:block" role="img" aria-label="Node and arrow size key"></svg>
     </section>
@@ -1274,10 +1307,9 @@ function go(dur){
     draw();
   }
   if (reduce || !dur){ step(1); finish(); return; }
-  var t0 = null;
-  anim = {raf: requestAnimationFrame(function tick(ts){
-    if (t0 == null) t0 = ts;
-    var u = Math.min(1, (ts - t0)/dur);
+  anim = {t0:null, dur:dur, raf: requestAnimationFrame(function tick(ts){
+    if (anim.t0 == null) anim.t0 = ts;
+    var u = Math.min(1, (ts - anim.t0)/anim.dur);
     step(u < .5 ? 4*u*u*u : 1 - Math.pow(-2*u+2, 3)/2);
     if (u < 1) anim.raf = requestAnimationFrame(tick); else { anim = null; finish(); }
   })};
@@ -2065,6 +2097,11 @@ function drawCallout(boxes, hits){
   [1, 1.6, 2.3, 3.2].forEach(function(f){
     [[-20, d*f], [-W2 + 20, d*f], [-20, -d*f - bh], [-W2/2, d*f], [r*f + 14, -bh/2], [-W2 - r*f - 14, -bh/2], [r*f + 14, d*f*0.6], [-W2 - r*f - 14, d*f*0.6]].forEach(function(o){ cands.push([x + o[0], y + o[1]]); });
   });
+  // then the map's edges: the top band first, then above the corner legend (the HTML legend is an obstacle too)
+  var mc = $("mapcorner"); if (mc && mc.classList.contains("on")){ var cb = mc.getBoundingClientRect(), sb2 = svg.getBoundingClientRect(), k2 = G.W / Math.max(1, sb2.width);
+    obst.push([(cb.left - sb2.left)*k2 - 6, (cb.top - sb2.top)*k2 - 6, (cb.right - sb2.left)*k2 + 6, (cb.bottom - sb2.top)*k2 + 6]); }
+  for (var cx2 = 0.3; cx2 <= 0.85; cx2 += 0.11) cands.push([G.W*cx2, 70]);
+  for (var cx3 = 0.15; cx3 <= 0.85; cx3 += 0.14) cands.push([G.W*cx3, G.H - bh - 46]);
   var pick = null;
   cands.some(function(c){ var bx0 = Math.max(4, Math.min(G.W - W2 - 4, c[0])), by0 = Math.max(4, Math.min(G.H - bh - 4, c[1]));
     if (clear([bx0 - 2, by0 - 2, bx0 + W2 + 2, by0 + bh + 2])){ pick = [bx0, by0]; return true; } return false; });
@@ -2072,7 +2109,7 @@ function drawCallout(boxes, hits){
   var bx = pick[0], by = pick[1];
   var g = mk("g", {"class":"callout", id:"callout"}, gL);
   var lx = Math.max(bx, Math.min(bx + W2, ax)), ly = ay < by ? by : by + bh;
-  mk("line", {x1:ax.toFixed(1), y1:ay.toFixed(1), x2:lx.toFixed(1), y2:ly.toFixed(1), stroke:"var(--ink-2)", "stroke-width":1.2}, g);
+  if (Math.hypot(lx - ax, ly - ay) < 260) mk("line", {x1:ax.toFixed(1), y1:ay.toFixed(1), x2:lx.toFixed(1), y2:ly.toFixed(1), stroke:"var(--ink-2)", "stroke-width":1.2}, g);   // no long leaders across the map
   mk("rect", {"class":"cbox", x:bx.toFixed(1), y:by.toFixed(1), width:(tw + 22).toFixed(1), height:bh, rx:4}, g);
   var t = mk("text", {x:(bx + 7).toFixed(1), y:(by + bh/2 + G.fs*0.36).toFixed(1)}, g); t.textContent = txt;
   var cx = mk("g", {"class":"cx", role:"button", tabindex:"0", "aria-label":"Dismiss this note"}, g);
@@ -2106,6 +2143,7 @@ function measureDesc(){
   if (S.win === "mem") L.push("Memory window: moves are decayed totals (half-life "+HL[S.hl]+" yr); the share divides by the decayed start-of-year book.");
   if (S.win === "cum") L.push("Since 2000: totals since 2000; the share is pooled (total moved &divide; sum of start-of-year books).");
   $("measure-desc").innerHTML = "<ul>" + L.map(function(t){ return "<li>"+t+"</li>"; }).join("") + "</ul>";
+  if (typeof sbNote === "function" && $("sb-note")) sbNote();
   // Window note, with a decay example read from the data
   var W = {
     year: "This year: only moves made in the selected year.",
@@ -2519,6 +2557,7 @@ window.__capture = {
     if (o.labelAll != null) setLabelAll(!!o.labelAll);
     if (o.theme) document.documentElement.setAttribute("data-theme", o.theme);
     if (o.msPerMonth) CAP.msPerMonth = o.msPerMonth;
+    if (o.speed != null && isFinite(o.speed) && o.speed > 0) setSpeed(+o.speed);
     if (o.kinds) GROUPS.forEach(function(g){ S.kinds[g.k] = o.kinds.indexOf(g.k) >= 0; $("kind-" + g.k).checked = S.kinds[g.k]; });
     if (o.layers) Object.keys(o.layers).forEach(function(k){ S.layers[k] = !!o.layers[k]; var c = $("layer-" + k); if (c) c.checked = S.layers[k]; });
     colCache = {}; darkCache = {}; computeTargets(); curN = tgtN.slice(); curP = tgtP.slice(); draw(); headline(); tlSync(true);
@@ -2648,24 +2687,61 @@ function stop(){ if (timer){ clearTimeout(timer); timer=null; } $("play").setAtt
 function playStep(){
   if (S.time === "smooth"){
     if (S.mi >= DS.NM-1){ stop(); return; }
-    setMonth(S.mi+1, Math.min(130/speed, 150/speed - 10)); timer = setTimeout(playStep, 150/speed); return;
+    setMonth(S.mi+1, Math.min(130/speed, 150/speed - 10)); stepT0 = performance.now(); stepDur = 150/speed; timer = setTimeout(playStep, stepDur); return;
   }
   if (S.yi >= NY-1){ stop(); return; }
   setYear(S.yi+1, Math.min(850/speed, 1200/speed - 10));
-  timer = setTimeout(playStep, 1200/speed);
+  stepT0 = performance.now(); stepDur = 1200/speed; timer = setTimeout(playStep, stepDur);
 }
 $("play").addEventListener("click", function(){
   if (timer){ stop(); return; }
   if (S.time === "smooth" ? S.mi >= DS.NM-1 : S.yi >= NY-1){ if (S.time === "smooth") setMonth(0, 0); else setYear(0, 0); }
   $("play").setAttribute("aria-pressed","true"); $("play").textContent="Pause";
-  timer = setTimeout(playStep, (S.time === "smooth" ? 150 : 1200)/speed);
+  stepT0 = performance.now(); stepDur = (S.time === "smooth" ? 150 : 1200)/speed; timer = setTimeout(playStep, stepDur);
 });
-document.querySelectorAll("#speed button").forEach(function(b){
-  b.addEventListener("click", function(){
-    speed = +b.getAttribute("data-s");
-    document.querySelectorAll("#speed button").forEach(function(o){ o.setAttribute("aria-pressed", o===b ? "true" : "false"); });
+// speed slider: log scale 1/16x to 8x (equal distance = equal ratio), sticky detents, live rescaling while playing
+var SPD_MIN = -4, SPD_MAX = 3, DETENTS = [0.125, 0.25, 0.5, 1, 2, 4], SNAP = 60, altHeld = false;
+function spdPos(v){ return Math.round((Math.log2(v) - SPD_MIN)/(SPD_MAX - SPD_MIN)*1000); }
+function spdVal(p){ return Math.pow(2, SPD_MIN + p/1000*(SPD_MAX - SPD_MIN)); }
+function spdFmt(v){ return (v >= 1 ? (Math.abs(v - Math.round(v)) < 0.005 ? String(Math.round(v)) : v.toFixed(2)) : (DETENTS.indexOf(v) >= 0 ? String(v) : v.toFixed(3).replace(/0+$/, ""))) + "x"; }
+var stepT0 = null, stepDur = null;      // the pending play step: when it was scheduled and for how long
+function setSpeed(v, fromSlider){
+  v = Math.max(Math.pow(2, SPD_MIN), Math.min(Math.pow(2, SPD_MAX), v));
+  var old = speed; speed = v;
+  if (!fromSlider) $("speed").value = spdPos(v);
+  $("speed-out").textContent = spdFmt(v); $("speed").setAttribute("aria-valuetext", spdFmt(v));
+  if (old === v) return;
+  var now = performance.now();
+  if (timer && stepT0 != null){                         // stretch the remaining wait without restarting the step
+    var left = Math.max(0, stepT0 + stepDur - now)*old/v;
+    clearTimeout(timer); stepT0 = now; stepDur = left; timer = setTimeout(playStep, left);
+  }
+  if (anim && anim.t0 != null){                         // and the tween in progress, keeping its progress
+    var u = Math.min(1, (now - anim.t0)/anim.dur); anim.dur = anim.dur*old/v; anim.t0 = now - u*anim.dur;
+  }
+}
+(function(){
+  var sl = $("speed");
+  var TL_ = {0.125:"1/8", 0.25:"1/4", 0.5:"1/2", 1:"1", 2:"2", 4:"4"};
+  $("speed-ticks").innerHTML = DETENTS.map(function(d){ var f = spdPos(d)/1000; return "<span style='left:calc(8px + (100% - 16px)*" + f.toFixed(4) + ")'>" + TL_[d] + "</span>"; }).join("");
+  ["pointerdown", "pointermove", "mousedown", "mousemove"].forEach(function(t){ sl.addEventListener(t, function(e){ altHeld = !!e.altKey; }); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Alt") altHeld = true; });
+  document.addEventListener("keyup", function(e){ if (e.key === "Alt") altHeld = false; });
+  sl.addEventListener("input", function(){
+    var p = +sl.value, v = spdVal(p);
+    if (!altHeld){ DETENTS.forEach(function(d){ if (Math.abs(p - spdPos(d)) <= SNAP){ v = d; } }); if (DETENTS.indexOf(v) >= 0) sl.value = spdPos(v); }
+    setSpeed(v, true);
   });
-});
+  sl.addEventListener("keydown", function(e){
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].indexOf(e.key) < 0) return;
+    e.preventDefault();
+    var up = e.key === "ArrowRight" || e.key === "ArrowUp";
+    if (e.shiftKey){ setSpeed(speed*(up ? 1.05 : 1/1.05)); return; }
+    var nxt = up ? DETENTS.filter(function(d){ return d > speed*1.001; })[0] : DETENTS.filter(function(d){ return d < speed/1.001; }).pop();
+    if (nxt != null) setSpeed(nxt);
+  });
+  $("speed-out").addEventListener("dblclick", function(){ setSpeed(1); });
+})();
 // explanations: shown by default, choice remembered when storage is available
 function setNotes(on){
   document.body.classList.toggle("notes-off", !on);
@@ -2699,6 +2775,12 @@ function sizeNet(){
   if (window.innerWidth < 620){ bx.style.height = ""; return; }
   var vh = document.fullscreenElement ? document.fullscreenElement.clientHeight - 28 : window.innerHeight - 24;
   var wide = window.innerWidth >= 1100, strip = wide ? $("tlpanel").offsetHeight + 14 : 0;
+  if (document.body.classList.contains("simple") && !document.fullscreenElement && !document.body.classList.contains("capture")){
+    // Simple: controls, map and at least the top of the event strip fit on one screen, map >= 430 px
+    var top = bx.getBoundingClientRect().top + window.scrollY, room = window.innerHeight - top - 12;
+    var h0 = room - strip;                                   // whole strip visible when that still leaves the map 430 px
+    bx.style.height = Math.round(h0 >= 430 ? h0 : Math.max(430, room - Math.min(strip, wide ? 150 : 0))) + "px"; return;
+  }
   bx.style.height = Math.max(520, Math.round(vh - strip)) + "px";
 }
 try { new ResizeObserver(onResize).observe($("netbox")); } catch(e){ window.addEventListener("resize", onResize); }
@@ -2757,6 +2839,45 @@ $("ev-toggle").addEventListener("click", function(){
 });
 
 /* ---------- init: key network, 2021 ---------- */
+// Simple / Advanced: Simple hides controls but keeps their current values, so the picture never changes on switching
+var SB = null;
+function sbGroups(){
+  return [[$("play"), $("prev"), $("next")], [$("year").closest(".slidewrap"), $("year-out")], [document.querySelector(".spd")],
+          [$("measure-lbl").parentNode], [$("ds-key").closest(".seg")], [document.querySelector("label[for=search]"), $("search"), $("search-list"), $("more-controls")],
+          [$("ui-simple").closest(".seg")]];
+}
+function moveBar(simple){
+  if (simple && !SB){
+    SB = [];
+    sbGroups().forEach(function(grp, gi){
+      var w = document.createElement("div"); w.className = "sbg" + (gi === 1 ? " sbslide" : ""); $("simplebar").appendChild(w);
+      grp.forEach(function(el){ if (!el) return; var mk2 = document.createTextNode(""); el.parentNode.insertBefore(mk2, el); SB.push([el, mk2]); w.appendChild(el); });
+    });
+  } else if (!simple && SB){
+    SB.forEach(function(p){ p[1].parentNode.insertBefore(p[0], p[1]); p[1].remove(); });
+    SB = null; $("simplebar").innerHTML = "";
+  }
+}
+function sbNote(){
+  var t = {n:"Width = medallions moved.", p:"Width = share of the sender's book that moved (Markov share).", m:"Width = share of all lender-held medallions that moved (market share)."}[S.measure];
+  $("sb-note").textContent = t + " Speed snaps to 1/8x-4x marks (hold Alt/Option to stop snapping).";
+}
+function setUI(mode, save){
+  moveBar(mode === "simple"); sbNote();
+  document.body.classList.toggle("simple", mode === "simple");
+  $("ui-" + mode).checked = true;
+  if (save) try { localStorage.setItem("fig112-ui", mode); } catch(e){}
+  setTimeout(function(){ drawTL(); sizeNet(); }, 30);
+}
+(function(){
+  var mode = "simple", stored = null;
+  try { stored = localStorage.getItem("fig112-ui"); } catch(e){}
+  if (stored === "advanced" || stored === "simple") mode = stored;
+  if (!stored && !/(^|[#&])capture\b/.test(location.hash)){ var mo = $("major-only"); if (mo && !mo.checked){ mo.checked = true; S.majorOnly = true; } }
+  setUI(mode, false);
+  document.querySelectorAll("input[name=uimode]").forEach(function(r){ r.addEventListener("change", function(){ setUI(r.value, true); }); });
+  $("more-controls").addEventListener("click", function(){ setUI("advanced", true); });
+})();
 legends();
 keySelection();
 mtypeNote(); opLegend();
@@ -2768,7 +2889,7 @@ measureDesc();
 fxSize(); fxKick();
 $("year").max = DS.NM - 1; setMonth(S.mi, 0);
 if (!motionOK()){ $("animate").checked = false; $("animate").disabled = true; $("note-anim").textContent = "Motion is off because the system asks for reduced motion; the figure is static."; }
-window.__net = {tlX:function(x){ return tlX(x, Math.max($("tlscroll").clientWidth || 900, 900)); }, fxDrawn:function(){ return fxDrawn; }, S:S, setMonth:setMonth, setTime:setTime, setLayout:setLayout, fxBurst:function(){ return fxBurst; }, fxCount:function(){ return fxCount; }, fxFrame:fxFrame, fxSize:fxSize, spotlight:spotlight, TL:TL, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
+window.__net = {setSpeed:setSpeed, speed:function(){ return speed; }, tlX:function(x){ return tlX(x, Math.max($("tlscroll").clientWidth || 900, 900)); }, fxDrawn:function(){ return fxDrawn; }, S:S, setMonth:setMonth, setTime:setTime, setLayout:setLayout, fxBurst:function(){ return fxBurst; }, fxCount:function(){ return fxCount; }, fxFrame:fxFrame, fxSize:fxSize, spotlight:spotlight, TL:TL, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
 })();
 </script>
 
