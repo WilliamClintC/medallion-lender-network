@@ -281,6 +281,24 @@ svg text{font-family:var(--sans)}
 .kst tr.cut td{border-top:2px dashed var(--ink-3)}
 .kst tr.out td{color:var(--ink-3)}
 .tools{margin-top:6px}
+.fbackdrop{position:fixed;inset:0;background:rgba(10,14,17,.35);z-index:60}
+.fmodal{position:fixed;top:56px;left:50%;transform:translateX(-50%);width:min(760px,94vw);max-height:calc(100vh - 80px);overflow:auto;z-index:61;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.fchoice{border-top:1px solid var(--rule);padding:10px 0 8px}
+.fchoice .note{margin:2px 0 6px;max-width:none}
+.fchoice select,.fchoice input[type=month]{padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);max-width:100%}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.storycap{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;background:var(--panel);border:1.5px solid var(--ink);border-radius:6px;padding:6px 8px 6px 14px;font:600 14px var(--sans);display:none;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.14);max-width:80%}
+.storycap.on{display:flex}
+.evmark{position:absolute;top:50%;width:3px;height:18px;margin:-9px 0 0 -1.5px;background:var(--warn-line);border-radius:1px;display:none;pointer-events:none;z-index:2}
+.evmark.on{display:block}
+.gtools{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:6px 0}
+body.following #evcard,body.following #insp{display:none !important}
+body.following #group-card .gpanel{grid-template-columns:minmax(0,1fr)}
+@media (min-width:1100px){
+  body.following .app{grid-template-columns:minmax(0,1fr) clamp(430px,34vw,640px)}
+  body.following #yearcard{flex:0 0 auto;max-height:24%}
+  body.following #group-card{flex:1 1 0;min-height:0;overflow:auto}
+}
 .followbar{position:absolute;right:10px;top:10px;z-index:3;background:var(--panel);border:1.5px solid var(--ink);border-radius:6px;padding:4px 6px 4px 12px;font:600 13.5px var(--sans);display:none;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.12);max-width:70%}
 .followbar.on{display:flex}
 .followbar.on ~ .thinnote{top:52px}
@@ -529,6 +547,7 @@ body.capture #tlscroll{max-height:none}
         <g id="g-regions"></g><g id="g-edges"></g><g id="g-hits"></g><g id="g-nodes"></g><g id="g-elabels"></g>
       </svg>
       <div class="hint" id="hint"></div>
+      <div class="storycap" id="storycap" role="status" aria-live="polite"><span id="storycap-txt"></span> <button type="button" class="btn primary" id="storycap-play">Play the story</button></div>
       <div class="mapcorner" id="mapcorner"><div class="small" id="flownote" style="margin:0 0 3px">Flow layout: position = who trades with whom, not lender type</div><div class="maplegend" id="maplegend"></div></div>
     </div>
     <div class="tlpanel card" id="tlpanel">
@@ -549,7 +568,7 @@ body.capture #tlscroll{max-height:none}
         <span class="small" style="margin:0">Timeline: hover an event for its source; click to jump to its year</span>
         <p class="note" id="speed-note" style="flex-basis:100%">Drag for any speed; it snaps to 0.125x-4x marks (hold Alt/Option to stop snapping).</p>
       </div>
-      <div class="slidewrap"><input type="range" id="year" min="0" max="25" step="1" value="21" aria-label="Year"><div class="thinhatch" aria-hidden="true"><span>thin record</span></div></div>
+      <div class="slidewrap"><input type="range" id="year" min="0" max="25" step="1" value="21" aria-label="Year"><div class="thinhatch" aria-hidden="true"><span>thin record</span></div><div class="evmark" id="evmark" aria-hidden="true"></div></div>
       <div class="tllayers adv" id="tl-layers" role="group" aria-label="Event layers"><span class="glbl">Events</span><label class="chk"><input type="checkbox" id="major-only">Major only</label></div>
       <p class="note">Large type = major events: the sales of 250+ medallions (Capital One, Signature, Melrose and LOMTO to DePalma), the Melrose and LOMTO wind-up, Doral (the first lender failure), and the market turning points (Uber, price peak, COVID, MRP closings). Everything else is minor, in small type beneath. Each event is named on the strip and coloured by layer. Hover or click a lender on the map to highlight its events (the rest dim); click an event to jump to its year. "Book turns bad" (off by default) is each lender's first sign of trouble in its own filings (stage 232).</p>
       <div class="concstrip" id="concstrip" hidden></div>
@@ -559,13 +578,19 @@ body.capture #tlscroll{max-height:none}
     </div>
     <div class="side" id="side"><div class="side-inner">
       <section class="card" id="yearcard" aria-live="polite">
-        <h2>The year</h2>
+        <h2 id="yearcard-h">The year</h2>
         <div class="bigyr" id="hl-year">2021</div>
         <div class="lmini" id="hl-lender"></div>
         <div class="evcards" id="hl-events"></div>
         <dl class="stats" id="hl-stats"></dl>
         <ul class="b" id="hl-notes"></ul>
       </section>
+      <section class="card" id="group-card" hidden>
+    <details open id="group-det"><summary><h2 style="display:inline">Following</h2> <span class="small" id="group-sum" style="margin:0"></span></summary>
+      <div class="gtools"><label class="chk"><input type="checkbox" id="group-evonly" checked>Timeline: only events of this group's lenders</label> <button type="button" class="btn" id="story-play">Play the story</button></div>
+      <div id="group-body"></div>
+    </details>
+  </section>
       <section class="card evpanel" id="evcard">
         <div class="evhead" role="tablist"><button type="button" class="tab on" id="tab-events" role="tab" aria-selected="true">Events</button><button type="button" class="tab" id="tab-big" role="tab" aria-selected="false">Biggest moves</button><button type="button" class="linkbtn" id="ev-toggle" aria-expanded="true" aria-controls="evbody">hide</button></div>
         <div class="bigbody" id="bigbody" hidden>
@@ -584,22 +609,25 @@ body.capture #tlscroll{max-height:none}
     </div></div>
   </div>
 
-  <section class="card extra" id="follow-card" hidden>
-    <div class="evhead"><h2>Follow a group</h2><button type="button" class="linkbtn" id="follow-close">close</button></div>
-    <p class="note">Pick a set of medallions and the map shows only them: where they go and how they fare. Medallion numbers are public TLC identifiers; no owner names are shown anywhere.</p>
-    <div class="fpick">
-      <div><label class="glbl" for="follow-cohort">A sale or a wound-up book</label><br>
-        <select id="follow-cohort"></select> <button class="btn" type="button" id="follow-go-cohort">Follow</button></div>
-      <div><span class="glbl">A lender's book on a date</span><br>
-        <select id="follow-node" aria-label="Lender"></select> <input type="month" id="follow-month" min="2000-01" max="2025-12" aria-label="Month"> <button class="btn" type="button" id="follow-go-book">Follow</button></div>
-      <div><label class="glbl" for="follow-med">One medallion</label><br>
-        <input id="follow-med" type="text" placeholder="Medallion number, e.g. 1A16" autocomplete="off" style="padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);width:200px"> <button class="btn" type="button" id="follow-go-med">Follow</button> <span class="small" id="follow-err" style="margin:0"></span></div>
+  <div class="fbackdrop" id="follow-backdrop" hidden></div>
+  <section class="card fmodal" id="follow-card" role="dialog" aria-modal="true" aria-labelledby="follow-title" hidden>
+    <div class="evhead"><h2 id="follow-title">Follow a group of medallions</h2><button type="button" class="linkbtn" id="follow-close">close (Esc)</button></div>
+    <p class="note" style="max-width:none">The map then shows only those medallions: where they go and how they fare. Medallion numbers are public TLC identifiers; no owner names are shown.</p>
+    <div class="fchoice">
+      <label class="glbl" for="follow-cohort">1. A key event or a wound-up book</label>
+      <p class="note">The medallions sold in one of the big sales, or held by a failed lender when it wound up.</p>
+      <div><select id="follow-cohort"></select> <button class="btn primary" type="button" id="follow-go-cohort">Follow</button></div>
     </div>
-  </section>
-  <section class="card extra" id="group-card" hidden>
-    <details open id="group-det"><summary><h2 style="display:inline">Following a group</h2> <span class="small" id="group-sum" style="margin:0"></span></summary>
-      <div id="group-body"></div>
-    </details>
+    <div class="fchoice">
+      <span class="glbl">2. A lender's book on a date</span>
+      <p class="note">Every medallion a lender held at the end of a chosen month, weighted by its share of the loan.</p>
+      <div><select id="follow-node" aria-label="Lender"></select> <input type="month" id="follow-month" min="2000-01" max="2025-12" aria-label="Month"> <button class="btn" type="button" id="follow-go-book">Follow</button></div>
+    </div>
+    <div class="fchoice">
+      <label class="glbl" for="follow-med">3. One medallion</label>
+      <p class="note">Its lifeline: every holder, how each move happened, owner-of-record changes and its TLC state by year.</p>
+      <div><input id="follow-med" type="text" placeholder="Medallion number, e.g. 1A18" autocomplete="off" style="padding:4px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);width:220px"> <button class="btn" type="button" id="follow-go-med">Follow</button> <span class="small" id="follow-err" style="margin:0"></span></div>
+    </div>
   </section>
   <section class="card extra" id="matrix-card" hidden>
     <div class="evhead"><h2>Transition matrix</h2>
@@ -843,7 +871,7 @@ function netKey(name){ return name === "key" && S.mtype && S.mtype !== "all" && 
 var DS = NETS.key, YEARS = DS.years, NY = YEARS.length, NODES = DS.nodes, NI = DS.NI;
 
 /* ---------- state ---------- */
-var S = {group:null, mtype:"all", colorBy:"type", time:"smooth", mi:252, layout:"flow", hideLapse:false, labelAll:false, persist:true, hl:2, ds:"key", yi:21, measure:"n", win:"mem", kinds:{}, minIdx:MIN_DEFAULT.key, focus:null, hover:null, pin:null};
+var S = {groupEvOnly:true, group:null, mtype:"all", colorBy:"type", time:"smooth", mi:252, layout:"flow", hideLapse:false, labelAll:false, persist:true, hl:2, ds:"key", yi:21, measure:"n", win:"mem", kinds:{}, minIdx:MIN_DEFAULT.key, focus:null, hover:null, pin:null};
 GROUPS.forEach(function(g){ S.kinds[g.k]=true; });
 var reduce = false;
 try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){}
@@ -1779,13 +1807,15 @@ function applyDim(){
     if (f && !nbr[id]) op = 0.28;
     if (spot && !f && !spot.ids[id]) op = 0.25;
     if (he && id !== he.from && id !== he.to) op = Math.min(op, 0.45);
+    var gNone = S.group && id !== PUB && !(stockAt(NODES[i]) >= 0.5);   // following: lenders holding none of the group now
+    if (gNone) op = Math.min(op, 0.15);
     e.g.style.opacity = op; e.t1.style.opacity = op; e.ll.style.opacity = op;
     e.ring.style.stroke = (f===id) ? "var(--ink)" : "";
     e.ring.style.strokeWidth = (f===id) ? "2px" : "";
-    var show = labelSet[id] || id===hn || (f && nbr[id]) || (he && (id===he.from || id===he.to));
+    var show = !gNone && (labelSet[id] || id===hn || (f && nbr[id]) || (he && (id===he.from || id===he.to)));
     e.t1.style.display = show ? "" : "none";
     // all-lenders ring: loop values only for the hovered or focused node and the centre (Public); names have the room
-    e.ll.style.display = (e.loopOn && (DS.big ? (id === hn || id === f || id === PUB) : (S.layout === "columns" || S.measure === "p"))) ? "" : "none";
+    e.ll.style.display = (!gNone && e.loopOn && (DS.big ? (id === hn || id === f || id === PUB) : (S.layout === "columns" || S.measure === "p"))) ? "" : "none";
   });
   var fb = $("focusbar");
   if (f){
@@ -2113,6 +2143,7 @@ function legends(){
   sizeKey();
 }
 function sizeKey(){
+  if (!G || !(G.rs > 0) || !(G.ws > 0)) return;      // no layout yet (legends() runs before the first useNet)
   // drawn at half the on-map scale of the current view, so it stays proportional to what is on screen
   var s = $("leg-size"), h = "", x = 14, k = 0.5;
   [100, 1000, 3000].forEach(function(v){
@@ -2136,7 +2167,7 @@ try { calloutOn = localStorage.getItem("fig112-callout") !== "0"; } catch(e){}
 function drawCallout(boxes, hits){
   var old = document.getElementById("callout"); if (old) old.remove();
   var mi = NI["Melrose CU"];
-  if (!calloutOn || S.ds !== "key" || YEARS[S.yi] !== 2021 || !S.persist || mi == null || NODES[mi].p_stay[S.yi] == null) return;
+  if (!calloutOn || S.group || S.ds !== "key" || YEARS[S.yi] !== 2021 || !S.persist || mi == null || NODES[mi].p_stay[S.yi] == null) return;
   var n = NODES[mi], ne = nodeEls[mi], x = NX(n), y = NYp(n), r = (curN[mi] || 0);
   var txt = "Loop = share of its book Melrose kept in 2021: " + pct(n.p_stay[S.yi]).replace("&gt;", ">");
   var tw = textW(txt, false, G.fs) + 14, bh = G.fs + 12;
@@ -2225,7 +2256,11 @@ var LAYERS = [
 S.layers = {market:true, failure:true, sale:true, depalma:true, distress:false};
 S.hoverEv = null;    // index of a hovered event row
 S.majorOnly = false;
-function evVis(ev){ return S.layers[ev.layer] && (!S.majorOnly || ev.tier === 1); }
+function evVis(ev){
+  if (!(S.layers[ev.layer] && (!S.majorOnly || ev.tier === 1))) return false;
+  if (S.group && S.groupEvOnly && S.group.nodes){ var L = evL(ev); if (L.length && !L.some(function(id){ return S.group.nodes[id]; })) return false; }
+  return true;
+}
 function evL(ev){ return S.ds === "key" ? ev.lk : ev.lf; }       // lender ids in the active network
 function hlNode(){ return (S.hover && S.hover.t === "n") ? S.hover.id : S.focus; }
 function evStat(ev){
@@ -2283,6 +2318,9 @@ function drawTL(){
   h += "<rect x='"+ya.toFixed(1)+"' y='"+bandTop+"' width='"+(yb-ya).toFixed(1)+"' height='"+(axisY-bandTop-10)+"' fill='var(--ink)' fill-opacity='0.07'/>";
   h += "<line x1='"+px.toFixed(1)+"' x2='"+px.toFixed(1)+"' y1='"+bandTop+"' y2='"+(axisY-10)+"' stroke='var(--ink)' stroke-width='1.5'/>";
   h += "<line x1='0' x2='"+W+"' y1='"+tickY+"' y2='"+tickY+"' stroke='var(--rule)'/>";
+  if (S.group && S.group.month){ var gx = tlX(2000 + (S.group.month + 0.5)/12, W);
+    h += "<line x1='"+gx.toFixed(1)+"' x2='"+gx.toFixed(1)+"' y1='"+bandTop+"' y2='"+(axisY-10)+"' stroke='var(--warn-line)' stroke-width='3' stroke-opacity='0.8'/>" +
+         "<text x='"+(gx+5).toFixed(1)+"' y='"+(bandTop+22)+"' font-size='11' font-weight='700' fill='var(--warn-line)' paint-order='stroke' stroke='var(--panel)' stroke-width='3'>this group's event</text>"; }
   // year axis on the same x-scale as events and playhead: a tick at 1 January of each year, label left-aligned at its tick
   for (var yr=2000; yr<=2026; yr++){
     var tx = Math.max(1, tlX(yr, W)), maj = yr % 5 === 0;
@@ -2740,16 +2778,68 @@ function bookGroup(nodeId, m){
 }
 function medGroup(i){ var M = mp(); return {id:"med|" + i, kind:"single", label:"Medallion " + M.P.medallions[i], members:[[i, 1]], comparison:null, month:0, med:i}; }
 function groupSize(G){ return G.members.reduce(function(a, m){ return a + m[1]; }, 0); }
+var preFollow = null, storyT = null;
+function closePicker(){ $("follow-card").hidden = true; $("follow-backdrop").hidden = true; $("follow-btn").setAttribute("aria-expanded", "false"); }
+function groupNodes(G){                     // ids of every node the group passes through (any month)
+  var D = groupDS(G, S.ds), o = {}, pubI = D.NI[PUB];
+  D.gstk.forEach(function(a, ni){ if (ni === pubI) return; for (var m=0; m<a.length; m++) if (a[m] > 0.001){ o[D.nodes[ni].id] = 1; break; } });
+  return o;
+}
+function storyText(G){
+  var n = fmt(groupSize(G));
+  if (G.kind === "sale") return [ "Before: where these " + n + " medallions were in " + (2000 + Math.floor(Math.max(0, G.month - 36)/12)), monthLabel(G.month) + ": sold to " + G.cohort.buyer, "After: where they ended up (Dec 2025)" ];
+  if (G.kind === "book") return [ "Before: where these " + n + " medallions were in " + (2000 + Math.floor(Math.max(0, G.month - 36)/12)), monthLabel(G.month) + ": " + G.cohort.lender.replace(/ (CU|FCU)$/, "") + "'s last call report (wound up)", "After: where they ended up (Dec 2025)" ];
+  if (G.kind === "lenderdate") return [ "Before: where these " + n + " medallions were three years earlier", monthLabel(G.month) + ": the book on this date", "After: where they ended up (Dec 2025)" ];
+  return null;
+}
+function storyCaption(t, showPlay){ $("storycap-txt").textContent = t; $("storycap-play").style.display = showPlay ? "" : "none"; $("storycap").classList.toggle("on", !!t); }
+function storyStop(){ if (storyT){ clearTimeout(storyT); storyT = null; } $("story-play").textContent = "Play the story"; }
+function storyPlay(){
+  var G = S.group, tx = G && storyText(G); if (!tx) return;
+  if (storyT){ storyStop(); return; }
+  stop();
+  if (S.time !== "smooth"){ $("time-smooth").checked = true; setTime("smooth"); }
+  if (S.mi >= mp().P.n_months - 1 || S.mi > G.month) setMonth(Math.max(0, G.month - 36), 0);
+  $("story-play").textContent = "Pause the story"; storyCaption(tx[0], false);
+  var step = function(){
+    if (S.mi >= mp().P.n_months - 1){ storyT = null; $("story-play").textContent = "Play the story again"; storyCaption(tx[2], false); return; }
+    setMonth(S.mi + 1, 260);
+    if (S.mi === G.month){ storyCaption(tx[1], false); storyT = setTimeout(function(){ storyCaption(tx[1] + " \u00b7 continuing", false); storyT = setTimeout(step, 300); }, 2000); return; }
+    if (S.mi === G.month + 12) storyCaption("", false);
+    storyT = setTimeout(step, 300);                       // 0.5x of Smooth's 1x pace (0.15 s per month)
+  };
+  storyT = setTimeout(step, 400);
+}
 function startFollow(G){
+  if (!S.group) preFollow = {mi:S.mi, yi:S.yi, time:S.time, focus:S.focus};
+  storyStop();
   S.group = G; S.focus = null; S.pin = null;
+  G.nodes = groupNodes(G);
+  if (G.kind === "sale" && !G.evFixed){
+    var Dg = groupDS(G, "key"), si = Dg.NI[G.seller], bi = Dg.NI[G.target], w0 = ymToMonth(G.cohort.window[0]), w1 = ymToMonth(G.cohort.window[1]), best = -1, bm = G.month;
+    for (var q = w0; q <= w1; q++){ var v = 0; Dg.M[q].forEach(function(r){ if (r[1] === si && r[2] === bi) v += r[4]; }); if (v > best){ best = v; bm = q; } }
+    G.month = bm; G.evFixed = true;
+  }
+  document.body.classList.add("following"); $("yearcard-h").textContent = "This group";
+  closePicker();
   useNet(S.ds, true);
   $("followbar-txt").textContent = "Following: " + G.label.replace(" to ", " \u2192 ") + (G.kind === "single" ? "" : " (" + fmt(groupSize(G)) + " medallions)");
   $("followbar").classList.add("on"); $("group-card").hidden = false; $("follow-card").hidden = true; $("follow-btn").setAttribute("aria-expanded", "false");
-  renderGroup(); fxKick();
+  var tx = storyText(G);
+  if (tx && G.month){ setMonth(Math.max(0, G.month - 36), 0); storyCaption(tx[0], true); } else storyCaption("", false);
+  $("story-play").style.display = tx ? "" : "none";
+  var em = $("evmark"); if (G.month){ em.style.left = "calc(8px + (100% - 16px)*" + (G.month/(DS.NM - 1)).toFixed(4) + ")"; em.classList.add("on"); } else em.classList.remove("on");
+  renderGroup(); sizeNet(); drawTL(); fxKick();
+  setTimeout(sizeNet, 30);
 }
 function exitFollow(){
-  S.group = null; useNet(S.ds, true);
+  storyStop(); storyCaption("", false);
+  S.group = null; document.body.classList.remove("following"); $("yearcard-h").textContent = "The year"; $("evmark").classList.remove("on");
   $("followbar").classList.remove("on"); $("group-card").hidden = true;
+  useNet(S.ds, true);
+  if (preFollow){ if (preFollow.time !== S.time){ $("time-" + (preFollow.time === "smooth" ? "smooth" : "year")).checked = true; setTime(preFollow.time); }
+    if (S.time === "smooth") setMonth(preFollow.mi, 0); else setYear(preFollow.yi, 0); preFollow = null; }
+  sizeNet(); drawTL();
 }
 // statistics, cached per group (and per year for the Public comparison)
 function profileOf(mem, y){                 // weighted state days, record days, starts, n in record
@@ -2892,8 +2982,8 @@ function renderGroup(){
   else if (G.kind === "book") h += "<p class='note' style='max-width:none'>"+fmt(G.cohort.n_members)+" medallions held by "+esc(G.cohort.lender)+" on "+G.cohort.date+". Comparison: Public (no lender) that year.</p>";
   else if (G.kind === "lenderdate") h += "<p class='note' style='max-width:none'>Every medallion held at "+esc(G.label)+", weighted by its share of the loan ("+fmt(n)+" medallions). Comparison: Public (no lender) that year.</p>";
   if (G.kind === "single") h += "<div class='gpanel' style='grid-template-columns:1fr'><div style='max-width:1000px'><h3>Lifeline</h3>"+lifeline(G)+"</div></div>";
-  else h += "<div class='gpanel'><div><h3>Where they are</h3>"+areaChart(G)+"</div><div><h3>Days able to operate, 2013 to 2025</h3>"+operChart(G)+"</div>" +
-            "<div><h3>TLC state of their record days</h3>"+profileChart(G)+"</div><div><h3>What became of them</h3>"+outcomeTable(G)+"</div></div>";
+  else h += "<div class='gpanel'><div><h3>Where they are</h3>"+areaChart(G)+"</div><div><h3>What became of them</h3>"+outcomeTable(G)+"</div>" +
+            "<div><h3>Days able to operate, 2013 to 2025</h3>"+operChart(G)+"</div><div><h3>TLC state of their record days</h3>"+profileChart(G)+"</div></div>";
   h += "<ul class='b note' style='margin-top:10px;max-width:none'><li>Groups were not randomly assigned to buyers (Figures 99, 107): this describes, it does not prove a lender effect.</li>" +
        "<li>Cohort counts run above the registry because every medallion a loan names is counted (Melrose to DePalma 2,402 against 2,031).</li>" +
        "<li>The kept comparison can be thin (Melrose kept 140).</li><li>Holder of record; owner changes on the TLC list can lag the transfer. Days able to operate = days on the TLC Authorized list, not hours driven.</li>" +
@@ -2928,7 +3018,8 @@ document.addEventListener("click", function(e){
 }, true);
 (function(){
   $("follow-btn").addEventListener("click", function(){
-    var card = $("follow-card"), on = card.hidden; card.hidden = !on; this.setAttribute("aria-expanded", on);
+    var card = $("follow-card"), on = card.hidden; if (!on){ closePicker(); return; }
+    card.hidden = false; $("follow-backdrop").hidden = false; this.setAttribute("aria-expanded", "true");
     if (on){
       if (!$("follow-cohort").options.length){
         cohorts().forEach(function(c){ $("follow-cohort").add(new Option(c.label + " \u2014 ".replace(" \u2014 ", ": ") + fmt(c.n_members) + " medallions" + (c.registry_medallions ? " (registry " + fmt(c.registry_medallions) + ")" : ""), c.id)); });
@@ -2936,10 +3027,21 @@ document.addEventListener("click", function(e){
       var sel = $("follow-node"); sel.innerHTML = ""; NETS[S.ds].nodes.forEach(function(n){ if (n.id !== PUB) sel.add(new Option(n.label, n.id)); });
       sel.value = "DePalma (distressed)";
       $("follow-month").value = (2000 + Math.floor(S.mi/12)) + "-" + ("0" + (S.mi % 12 + 1)).slice(-2);
-      card.scrollIntoView({block:"nearest"});
+      if (!card.dataset.init){ $("follow-cohort").value = "melrose_to_depalma_jan_2021"; card.dataset.init = "1"; }
+      setTimeout(function(){ $("follow-cohort").focus(); }, 0);
     }
   });
-  $("follow-close").addEventListener("click", function(){ $("follow-card").hidden = true; $("follow-btn").setAttribute("aria-expanded", "false"); });
+  $("follow-close").addEventListener("click", closePicker);
+  $("follow-backdrop").addEventListener("click", closePicker);
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && !$("follow-card").hidden){ e.preventDefault(); closePicker(); $("follow-btn").focus(); } });
+  $("follow-card").addEventListener("keydown", function(e){       // keep Tab inside the dialog
+    if (e.key !== "Tab") return; var f = [].slice.call(this.querySelectorAll("button,select,input")).filter(function(x){ return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return; var a = f[0], z = f[f.length-1];
+    if (e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
+  });
+  $("story-play").addEventListener("click", storyPlay);
+  $("storycap-play").addEventListener("click", storyPlay);
+  $("group-evonly").addEventListener("change", function(){ S.groupEvOnly = this.checked; updateActive(); tlSync(true); headline(); });
   $("follow-go-cohort").addEventListener("click", function(){ var c = cohorts().filter(function(x){ return x.id === $("follow-cohort").value; })[0]; if (c) startFollow(cohortGroup(c)); });
   $("follow-go-book").addEventListener("click", function(){ var v = $("follow-month").value; if (!v) return; var G = bookGroup($("follow-node").value, ymToMonth(v)); if (!G.members.length){ $("follow-err").textContent = "No medallions held there that month."; return; } startFollow(G); });
   var goMed = function(){ var q = $("follow-med").value.trim().toUpperCase(), i = mp().idx[q]; if (i == null){ $("follow-err").textContent = "No medallion " + q + " in the record."; return; } $("follow-err").textContent = ""; startFollow(medGroup(i)); };
@@ -3047,7 +3149,7 @@ document.querySelectorAll("input[name=colorby]").forEach(function(r){ r.addEvent
 document.querySelectorAll("input[name=mtype]").forEach(function(r){ r.addEventListener("change", function(){ S.mtype = r.value; var y = S.yi, m = S.mi; useNet("key"); if (S.time === "smooth") setMonth(m, 0); else setYear(y, 0); mtypeNote(); }); });
 
 var timer = null, speed = 1;
-function stop(){ if (timer){ clearTimeout(timer); timer=null; } $("play").setAttribute("aria-pressed","false"); $("play").textContent="Play"; }
+function stop(){ if (typeof storyStop === "function" && storyT) storyStop(); if (timer){ clearTimeout(timer); timer=null; } $("play").setAttribute("aria-pressed","false"); $("play").textContent="Play"; }
 // 1x = 1.2 s per year with an 850 ms tween; speed scales both and is read at every step
 // Yearly: 1x = 1.2 s per year (850 ms tween). Smooth: 1x = 0.15 s per month (130 ms tween), so a year takes 1.8 s
 function playStep(){
@@ -3141,6 +3243,10 @@ function sizeNet(){
   if (window.innerWidth < 620){ bx.style.height = ""; return; }
   var vh = document.fullscreenElement ? document.fullscreenElement.clientHeight - 28 : window.innerHeight - 24;
   var wide = window.innerWidth >= 1100, strip = wide ? $("tlpanel").offsetHeight + 14 : 0;
+  if (S.group && wide && !document.fullscreenElement && !document.body.classList.contains("capture")){
+    var gtop = bx.getBoundingClientRect().top + window.scrollY;
+    bx.style.height = Math.max(430, Math.round(window.innerHeight - gtop - 12 - Math.min(strip, 150))) + "px"; return;
+  }
   if (document.body.classList.contains("simple") && !document.fullscreenElement && !document.body.classList.contains("capture")){
     // Simple: controls, map and at least the top of the event strip fit on one screen, map >= 430 px
     var top = bx.getBoundingClientRect().top + window.scrollY, room = window.innerHeight - top - 12;
@@ -3255,7 +3361,7 @@ measureDesc();
 fxSize(); fxKick();
 $("year").max = DS.NM - 1; setMonth(S.mi, 0);
 if (!motionOK()){ $("animate").checked = false; $("animate").disabled = true; $("note-anim").textContent = "Motion is off because the system asks for reduced motion; the figure is static."; }
-window.__net = {groupShares:function(id, part, year){ var c = cohorts().filter(function(x){ return x.id === id; })[0], mem = c[part].map(function(i){ return [i, 1]; }), p = profileOf(mem, year - 2013); return p.st.map(function(d){ return d/p.rec; }); },
+window.__net = {storyPlay:function(){ storyPlay(); }, storyOn:function(){ return !!storyT; }, groupShares:function(id, part, year){ var c = cohorts().filter(function(x){ return x.id === id; })[0], mem = c[part].map(function(i){ return [i, 1]; }), p = profileOf(mem, year - 2013); return p.st.map(function(d){ return d/p.rec; }); },
   startFollow:function(id){ startFollow(cohortGroup(cohorts().filter(function(x){ return x.id === id; })[0])); }, followMed:function(m){ var i = mp().idx[String(m).toUpperCase()]; if (i == null) return false; startFollow(medGroup(i)); return true; }, exitFollow:exitFollow, cohorts:function(){ return cohorts(); }, setSpeed:setSpeed, speed:function(){ return speed; }, tlX:function(x){ return tlX(x, Math.max($("tlscroll").clientWidth || 900, 900)); }, fxDrawn:function(){ return fxDrawn; }, S:S, setMonth:setMonth, setTime:setTime, setLayout:setLayout, fxBurst:function(){ return fxBurst; }, fxCount:function(){ return fxCount; }, fxFrame:fxFrame, fxSize:fxSize, spotlight:spotlight, TL:TL, edges:function(){ return tgtE; }, setYear:setYear, useNet:useNet};
 })();
 </script>
