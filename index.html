@@ -432,10 +432,10 @@ body.simple .tools{margin-top:4px}
 .cmpwrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:12px}
 .cmpwrap svg{width:100%;height:auto;background:var(--panel);border:1px solid var(--rule);border-radius:4px}
 .cmpwrap h3{font:600 13px var(--sans);margin:0 0 4px}
-body.capture .top,body.capture #note-ds,body.capture .nodollar,body.capture .modes,body.capture .app .ctrl,body.capture .side,body.capture .legends,body.capture .caveats,body.capture .extra,body.capture .tltop,body.capture .slidewrap,body.capture .tllayers,body.capture #tlpanel .note,body.capture .mapcorner,body.capture .hint,body.capture .focusbar{display:none !important}
+body.capture .top,body.capture #note-ds,body.capture .nodollar,body.capture .modes,body.capture .app .ctrl,body.capture .side,body.capture .legends,body.capture .caveats,body.capture .extra,body.capture .tltop,body.capture .slidewrap,body.capture .tllayers,body.capture #tlpanel .note,body.capture .mapcorner,body.capture .hint,body.capture .focusbar,body.capture #simplebar,body.capture #more-controls,body.capture .ibtn,body.capture #layers-btn,body.capture #layers-panel,body.capture #followbar,body.capture #follow-backdrop,body.capture #follow-card,body.capture .footlink,body.capture #pop,body.capture #about,body.capture #about-backdrop,body.capture .callout .cx{display:none !important}
 body.capture .wrap{padding:8px;max-width:none}
 body.capture .app{grid-template-columns:minmax(0,1fr) !important;grid-template-areas:"net" "tl" !important;margin:0}
-body.capture #tlscroll{max-height:none}
+body.capture #tlscroll{max-height:none !important}
 .mapcorner{position:absolute;left:10px;bottom:8px;max-width:60%;pointer-events:none;display:none}
 .mapcorner.on{display:block}
 .maplegend{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11.5px;color:var(--ink-2);background:var(--panel);opacity:.92;padding:3px 6px;border-radius:4px}
@@ -3552,6 +3552,7 @@ function setUI(mode, save){
   var mode = "simple", stored = null;
   try { stored = localStorage.getItem("fig112-ui"); } catch(e){}
   if (stored === "advanced" || stored === "simple") mode = stored;
+  if (/(^|[#&])capture\b/.test(location.hash)) mode = "advanced";       // capture: Advanced geometry, stored preference untouched
   if (!stored && !/(^|[#&])capture\b/.test(location.hash)){ var mo = $("major-only"); if (mo && !mo.checked){ mo.checked = true; S.majorOnly = true; } }
   setUI(mode, false);
   document.querySelectorAll("input[name=uimode]").forEach(function(r){ r.addEventListener("change", function(){ setUI(r.value, true); }); });
