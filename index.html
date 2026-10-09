@@ -281,6 +281,46 @@ svg text{font-family:var(--sans)}
 .kst tr.cut td{border-top:2px dashed var(--ink-3)}
 .kst tr.out td{color:var(--ink-3)}
 .tools{margin-top:6px}
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;padding:0;margin:0 2px;border-radius:50%;border:1px solid var(--ink-3);background:var(--panel);color:var(--ink-2);font:600 11px/1 var(--mono);cursor:pointer;flex:0 0 auto;vertical-align:middle}
+.ibtn:hover,.ibtn[aria-expanded="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#pop{position:fixed;z-index:80;width:max-content;max-width:min(440px,92vw);max-height:60vh;overflow:auto;background:var(--panel);border:1px solid var(--ink-3);border-radius:6px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.22);font-size:12.5px;color:var(--ink)}
+#pop[hidden]{display:none}
+#pop .note,#pop p{font-size:12.5px;color:var(--ink-2);max-width:none;margin:0 0 6px}
+#pop ul{margin:0;padding-left:16px}
+#pop.sheet{left:0 !important;right:0;bottom:0;top:auto !important;max-width:none;width:auto;max-height:55vh;border-radius:12px 12px 0 0}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);background:var(--warn-bg);border-left:3px solid var(--warn-line);padding:2px 6px 2px 8px;border-radius:3px;white-space:nowrap}
+#noteholder{display:none}
+.ldrop{position:absolute;right:10px;top:8px;z-index:4}
+.ldrop .ldpanel{position:absolute;right:0;top:30px;width:min(560px,90vw);background:var(--panel);border:1px solid var(--ink-3);border-radius:6px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.ldrop .ldpanel[hidden]{display:none}
+.ldrop .tllayers{display:flex !important;margin:0}
+#tlpanel{position:relative}
+.about-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 10px;border-bottom:1px solid var(--rule)}
+.about-tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:5px 9px;font:600 12.5px var(--sans);color:var(--ink-3);cursor:pointer}
+.about-tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.about-pane[hidden]{display:none}
+.about-pane .legends{display:grid;margin:0}
+.about-pane .caveats{margin:0;border:0;padding:0}
+.footlink{margin:12px 0 0;font-size:12.5px}
+.mapcorner{display:block !important}
+.mapcorner .maplegend{align-items:center}
+details.gsec{border-top:1px solid var(--rule);padding:4px 0}
+details.gsec > summary{cursor:pointer;font-size:12.5px;padding:3px 0;list-style:none}
+details.gsec > summary::-webkit-details-marker{display:none}
+details.gsec > summary::before{content:"+ ";font-family:var(--mono);color:var(--ink-3)}
+details.gsec[open] > summary::before{content:"- "}
+details.gsec > summary b{font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:11.5px;color:var(--ink-2)}
+details.gsec > summary .sumtxt{color:var(--ink-3);margin-left:6px}
+.gtop{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink-2);margin:2px 0 4px}
+body.following .banner{top:56px}
+#hl-notes details{margin-top:2px} #hl-notes details summary{cursor:pointer;color:var(--ink-3);font-size:12px}
+#hl-notes li.more{list-style:none;margin-left:-17px}
+.stats{gap:1px 10px !important;font-size:12.5px !important}
+body.simple .topctl{flex-wrap:nowrap;gap:6px}
+body.simple .topctl .btn{padding:4px 8px;font-size:12.5px}
+body.simple h1{font-size:16px}
+body.simple #tlscroll{max-height:clamp(110px,17vh,240px) !important}
+body.simple #tlpanel{padding:6px 10px}
 .fbackdrop{position:fixed;inset:0;background:rgba(10,14,17,.35);z-index:60}
 .fmodal{position:fixed;top:56px;left:50%;transform:translateX(-50%);width:min(760px,94vw);max-height:calc(100vh - 80px);overflow:auto;z-index:61;box-shadow:0 10px 40px rgba(0,0,0,.25)}
 .fchoice{border-top:1px solid var(--rule);padding:10px 0 8px}
@@ -377,6 +417,11 @@ body.capture #tlscroll{max-height:none}
   .ctrl{gap:10px 14px}
   .bigyr{font-size:26px}
   .hint{display:none}
+  body.simple .topctl{flex-wrap:wrap} .top{flex-direction:column;align-items:stretch}
+  body.simple h1{white-space:normal}
+  .seg{flex-wrap:wrap}
+  #simplebar .sbg{flex-wrap:wrap}
+  #simplebar .sbslide{min-width:0;flex-basis:100%}
 }
 </style>
 
@@ -1133,7 +1178,7 @@ function regionGroups(){
 function drawRegions(){
   gR.innerHTML = "";
   var flow = S.layout === "flow";
-  $("mapcorner").className = "mapcorner" + (flow ? " on" : ""); $("flownote").style.display = flow ? "" : "none";
+  $("mapcorner").className = "mapcorner on"; $("flownote").style.display = flow ? "" : "none";
   if (flow) return;
   var groups = regionGroups(), fs = Math.max(11, Math.min(13, G.fs*0.92));
   if (!DS.radial){
@@ -1195,7 +1240,7 @@ function drawRegions(){
     tp.textContent = name;
   });
 }
-function layoutNote(){
+function layoutNote(){ setTimeout(function(){ var m = $("about-layout-metrics"), n = $("note-layout"); if (m && n) m.innerHTML = "<p class='note mono' style='max-width:none'>" + n.textContent + "</p>"; }, 0);
   var m = DS.lm, c = m.columns, q = m[S.layout], n = function(v){ return Math.round(v).toLocaleString("en-US"); };
   $("note-layout").textContent = (S.layout[0].toUpperCase() + S.layout.slice(1)) + ", this network: flow-weighted length " + n(q.flow_weighted_length) +
     (S.layout === "columns" ? "" : " (Columns " + n(c.flow_weighted_length) + ")") + "; large-edge crossings " + q.big_edge_crossings +
@@ -2018,7 +2063,7 @@ function nodeInsp(id){
   return h;
 }
 function defaultInsp(){
-  return "<ul class='b'><li>Hover or tap an arrow: medallions by kind, Markov share.</li><li>Hover or tap a node: book, in, out, top partners.</li><li>Click a node to show only its arrows.</li></ul>";
+  return "<p class='small' style='margin:0'>Hover or tap an arrow or a lender for details; click a lender to focus it.</p>";
 }
 function refreshInsp(){
   var s = S.hover || S.pin || (S.focus ? {t:"n", id:S.focus} : null), h;
@@ -2082,7 +2127,9 @@ function headline(){
   var low = null;
   NODES.forEach(function(n){ if (n.id !== PUB && n.start[yi] >= 100 && n.p_stay[yi] != null && (!low || n.p_stay[yi] < low.p_stay[yi])) low = n; });
   if (low) notes.push("Lowest persistence in "+y+": "+esc(low.label)+", "+pct(low.p_stay[yi])+" stayed");
-  $("hl-notes").innerHTML = notes.map(function(s){ return "<li>"+s+"</li>"; }).join("");
+  var li = function(s){ return "<li>"+s+"</li>"; };
+  $("hl-notes").innerHTML = notes.slice(0, 2).map(li).join("") +
+    (notes.length > 2 ? "<li class='more'><details><summary>more ("+(notes.length-2)+")</summary><ul class='b'>"+notes.slice(2).map(li).join("")+"</ul></details></li>" : "");
 }
 
 /* ---------- key-lender selection and broker text (read from stage 255's key_selection) ---------- */
@@ -2978,17 +3025,30 @@ function renderGroup(){
   if (!S.group) return;
   var G = S.group, n = groupSize(G), h = "";
   $("group-sum").textContent = G.label + (G.kind === "single" ? "" : " \u00b7 " + fmt(n) + " medallions");
-  if (G.kind === "sale") h += "<p class='note' style='max-width:none'>"+fmt(G.cohort.n_members)+" medallions sold (registry: "+fmt(G.cohort.registry_medallions)+" distinct medallions on assigned loans; the cohort counts every medallion a loan names); kept by "+esc(G.cohort.seller)+" (comparison): "+fmt(G.cohort.n_comparison)+(G.cohort.n_comparison < 200 ? ", a thin comparison" : "")+"; closed in the window: "+fmt(G.cohort.n_closed)+". Window "+G.cohort.window[0]+" to "+G.cohort.window[1]+".</p>";
-  else if (G.kind === "book") h += "<p class='note' style='max-width:none'>"+fmt(G.cohort.n_members)+" medallions held by "+esc(G.cohort.lender)+" on "+G.cohort.date+". Comparison: Public (no lender) that year.</p>";
-  else if (G.kind === "lenderdate") h += "<p class='note' style='max-width:none'>Every medallion held at "+esc(G.label)+", weighted by its share of the loan ("+fmt(n)+" medallions). Comparison: Public (no lender) that year.</p>";
-  if (G.kind === "single") h += "<div class='gpanel' style='grid-template-columns:1fr'><div style='max-width:1000px'><h3>Lifeline</h3>"+lifeline(G)+"</div></div>";
-  else h += "<div class='gpanel'><div><h3>Where they are</h3>"+areaChart(G)+"</div><div><h3>What became of them</h3>"+outcomeTable(G)+"</div>" +
-            "<div><h3>Days able to operate, 2013 to 2025</h3>"+operChart(G)+"</div><div><h3>TLC state of their record days</h3>"+profileChart(G)+"</div></div>";
-  h += "<ul class='b note' style='margin-top:10px;max-width:none'><li>Groups were not randomly assigned to buyers (Figures 99, 107): this describes, it does not prove a lender effect.</li>" +
+  var info = "";
+  if (G.kind === "sale") info += "<p>"+fmt(G.cohort.n_members)+" medallions sold (registry: "+fmt(G.cohort.registry_medallions)+" distinct medallions on assigned loans; the cohort counts every medallion a loan names); kept by "+esc(G.cohort.seller)+" (comparison): "+fmt(G.cohort.n_comparison)+(G.cohort.n_comparison < 200 ? ", a thin comparison" : "")+"; closed in the window: "+fmt(G.cohort.n_closed)+". Window "+G.cohort.window[0]+" to "+G.cohort.window[1]+".</p>";
+  else if (G.kind === "book") info += "<p>"+fmt(G.cohort.n_members)+" medallions held by "+esc(G.cohort.lender)+" on "+G.cohort.date+". Comparison: Public (no lender) that year.</p>";
+  else if (G.kind === "lenderdate") info += "<p>Every medallion held at "+esc(G.label)+", weighted by its share of the loan ("+fmt(n)+" medallions). Comparison: Public (no lender) that year.</p>";
+  info += "<ul><li>Groups were not randomly assigned to buyers (Figures 99, 107): this describes, it does not prove a lender effect.</li>" +
        "<li>Cohort counts run above the registry because every medallion a loan names is counted (Melrose to DePalma 2,402 against 2,031).</li>" +
        "<li>The kept comparison can be thin (Melrose kept 140).</li><li>Holder of record; owner changes on the TLC list can lag the transfer. Days able to operate = days on the TLC Authorized list, not hours driven.</li>" +
        "<li>No dollar amounts: every number is a count of medallions.</li></ul>";
+  POP.group = info;
+  var cmp = G.kind === "sale" ? "kept by " + esc(G.cohort.seller) + " (" + fmt(G.cohort.n_comparison) + ")" : "Public (no lender) that year";
+  h += "<div class='gtop'><span>"+(G.kind === "single" ? "One medallion" : fmt(n) + " medallions; comparison: " + cmp)+"</span><button type='button' class='ibtn' data-pop='group' aria-label='About this group: counts and caveats'>i</button></div>";
+  G.open = G.open || {where:true, oper:true, state:false, what:false, life:true};
+  var sec = function(k, title, sum, body){ return "<details class='gsec' data-k='"+k+"'"+(G.open[k] ? " open" : "")+"><summary><b>"+title+"</b>"+(sum ? "<span class='sumtxt'>"+sum+"</span>" : "")+"</summary>"+body+"</details>"; };
+  if (G.kind === "single") h += sec("life", "Lifeline", "", "<div style='max-width:1000px'>"+lifeline(G)+"</div>");
+  else {
+    var ST = groupStats(G), last = ST.g.length - 1, o = outcomeOf(G.members, G.target, G.month);
+    var tgtName = G.kind === "sale" ? G.cohort.buyer : (NETS.key.nodes[NETS.key.NI[G.target]] || {label:"the lender"}).label;
+    var sumState = (ST.g[last].oper != null ? mp().P.oper_years[last] + ": " + pct(ST.g[last].oper) + " able to operate" : "") + (ST.c[last].oper != null ? " vs " + pct(ST.c[last].oper) + (G.kind === "sale" ? " kept" : " Public") : "");
+    var sumWhat = pct(o.target/o.n) + " still with " + esc(tgtName) + "; " + pct(o.lapsed/o.n) + " lapsed; " + pct(o.term/o.n) + " terminated";
+    h += sec("where", "Where they are", "", areaChart(G)) + sec("oper", "Days able to operate", "", operChart(G)) +
+         sec("state", "TLC state and suspensions", sumState, profileChart(G)) + sec("what", "What became of them", sumWhat, outcomeTable(G));
+  }
   $("group-body").innerHTML = h; G.lastYear = S.yi;
+  $("group-body").querySelectorAll("details.gsec").forEach(function(d){ d.addEventListener("toggle", function(){ G.open[d.getAttribute("data-k")] = d.open; }); });
 }
 function groupTick(){
   if (!S.group || $("group-card").hidden) return;
@@ -3247,11 +3307,12 @@ function sizeNet(){
     var gtop = bx.getBoundingClientRect().top + window.scrollY;
     bx.style.height = Math.max(430, Math.round(window.innerHeight - gtop - 12 - Math.min(strip, 150))) + "px"; return;
   }
-  if (document.body.classList.contains("simple") && !document.fullscreenElement && !document.body.classList.contains("capture")){
-    // Simple: controls, map and at least the top of the event strip fit on one screen, map >= 430 px
-    var top = bx.getBoundingClientRect().top + window.scrollY, room = window.innerHeight - top - 12;
-    var h0 = room - strip;                                   // whole strip visible when that still leaves the map 430 px
-    bx.style.height = Math.round(h0 >= 430 ? h0 : Math.max(430, room - Math.min(strip, wide ? 150 : 0))) + "px"; return;
+  if (!document.fullscreenElement && !document.body.classList.contains("capture")){
+    // controls, map and the event strip fit on one screen where they can (Simple: map >= 360 px; Advanced: the
+    // controls take a scroll, so the map keeps >= 430 px)
+    var simple = document.body.classList.contains("simple"), top = bx.getBoundingClientRect().top + window.scrollY;
+    var room = window.innerHeight - top - 12;
+    bx.style.height = Math.round(Math.max(simple ? 360 : 430, room - (wide ? strip : 0))) + "px"; return;
   }
   bx.style.height = Math.max(520, Math.round(vh - strip)) + "px";
 }
@@ -3335,6 +3396,7 @@ function sbNote(){
   $("sb-note").textContent = t + " Speed snaps to 1/8x-4x marks (hold Alt/Option to stop snapping).";
 }
 function setUI(mode, save){
+  compactify();                              // controls get their i buttons before Simple moves them into its bar
   moveBar(mode === "simple"); sbNote();
   document.body.classList.toggle("simple", mode === "simple");
   $("ui-" + mode).checked = true;
@@ -3350,6 +3412,113 @@ function setUI(mode, save){
   document.querySelectorAll("input[name=uimode]").forEach(function(r){ r.addEventListener("change", function(){ setUI(r.value, true); }); });
   $("more-controls").addEventListener("click", function(){ setUI("advanced", true); });
 })();
+/* ---------- progressive disclosure: explanations behind "i" buttons, one About panel ---------- */
+var POP = POP || {}, popBtn = popBtn || null;
+function popHTML(btn){
+  var k = btn.getAttribute("data-pop");
+  if (k && POP[k] != null) return typeof POP[k] === "function" ? POP[k]() : POP[k];
+  return (btn.getAttribute("data-notes") || "").split(",").filter(Boolean).map(function(id){ var e = $(id); return e ? e.outerHTML.replace(/ id="[^"]*"/g, "") : ""; }).join("");
+}
+function closePop(){ var p = $("pop"); if (p.hidden) return; p.hidden = true; if (popBtn){ popBtn.setAttribute("aria-expanded", "false"); popBtn.focus(); } popBtn = null; }
+function openPop(btn){
+  var p = $("pop"); if (popBtn === btn && !p.hidden){ closePop(); return; }
+  if (popBtn) popBtn.setAttribute("aria-expanded", "false");
+  popBtn = btn; btn.setAttribute("aria-expanded", "true");
+  p.innerHTML = popHTML(btn); p.hidden = false; p.setAttribute("aria-label", btn.getAttribute("aria-label") || "Explanation");
+  var sheet = window.innerWidth < 620; p.classList.toggle("sheet", sheet);
+  if (!sheet){ var r = btn.getBoundingClientRect(), w = p.offsetWidth, hgt = p.offsetHeight;
+    var left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left - 10)), top = r.bottom + 6;
+    if (top + hgt > window.innerHeight - 8) top = Math.max(8, r.top - hgt - 6);
+    p.style.left = left + "px"; p.style.top = top + "px"; }
+  p.focus();
+}
+function ibtn(label, attrs){ var b = document.createElement("button"); b.type = "button"; b.className = "ibtn"; b.textContent = "i"; b.setAttribute("aria-label", "About: " + label); b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-haspopup", "dialog"); for (var a in attrs) b.setAttribute(a, attrs[a]); return b; }
+document.addEventListener("click", function(e){
+  var b = e.target.closest && e.target.closest(".ibtn"); if (b){ e.preventDefault(); e.stopPropagation(); openPop(b); return; }
+  if (!$("pop").hidden && !$("pop").contains(e.target)) closePop();
+}, true);
+document.addEventListener("keydown", function(e){ if (e.key === "Escape"){ if (!$("pop").hidden){ e.preventDefault(); closePop(); } else if (!$("about").hidden){ e.preventDefault(); closeAbout(); } } });
+function closeAbout(){ $("about").hidden = true; $("about-backdrop").hidden = true; if ($("about").opener) $("about").opener.focus(); }
+function openAbout(tab, opener){
+  $("about").opener = opener || null;
+  if ($("about-how")){ $("about-how").innerHTML = "<p class='note' style='max-width:none'>What each control does (the same text as the controls' i buttons).</p>" +
+    ["measure-desc","note-window","note-hl","note-persist","note-lapse","note-anim","note-min","note-time","note-layoutx","note-colorby","note-mtype","speed-note","note-kinds"].map(function(id){ var e = $(id); return e ? e.outerHTML.replace(/ id="[^"]*"/g, "") : ""; }).join(""); }
+  $("about").hidden = false; $("about-backdrop").hidden = false; showTab(tab || "caveats");
+  setTimeout(function(){ var b = $("about").querySelector(".about-tabs button[aria-selected=true]"); if (b) b.focus(); }, 0);
+}
+function showTab(k){ $("about").querySelectorAll(".about-tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.getAttribute("data-tab") === k ? "true" : "false"); });
+  $("about").querySelectorAll(".about-pane").forEach(function(pn){ pn.hidden = pn.getAttribute("data-tab") !== k; }); }
+var compacted = compacted || false;          // setUI may already have run it
+function compactify(){
+  if (compacted) return; compacted = true; POP = POP || {};
+  var hold = document.createElement("div"); hold.id = "noteholder"; document.body.appendChild(hold);
+  var pop = document.createElement("div"); pop.id = "pop"; pop.hidden = true; pop.setAttribute("role", "dialog"); pop.tabIndex = -1; document.body.appendChild(pop);
+  var uid = 0, park = function(el){ if (!el.id) el.id = "nt" + (uid++); hold.appendChild(el); return el.id; };
+  // 1. every control group's explanation rows -> an i next to its label
+  document.querySelectorAll(".cg").forEach(function(cg){
+    var notes = [].slice.call(cg.children).filter(function(c){ return c.matches("p.note, .mdesc, ul.notelist"); });
+    if (!notes.length) return;
+    var grp = cg.querySelector(".grp"), lab = grp && grp.querySelector(".glbl"), name = lab ? lab.textContent : (grp && grp.textContent.trim().split(/\s{2,}/)[0]) || "this control";
+    var ids = notes.map(park);
+    var b = ibtn(name, {"data-notes": ids.join(",")});
+    if (lab && lab.parentNode === grp) lab.insertAdjacentElement("afterend", b); else if (grp) grp.appendChild(b);
+    cg.classList.add("compact");
+  });
+  // name the parked notes the About panel lists
+  [["min","Hides arrows"],["time","Smooth: moves"],["layoutx","Flow (default)"],["colorby","Days able to operate ="],["kinds","Sale (assigned)"]].forEach(function(p){
+    [].slice.call(hold.children).forEach(function(e){ if (!$("note-" + p[0]) && e.textContent.indexOf(p[1]) >= 0 && /^nt/.test(e.id)) e.id = "note-" + p[0]; }); });
+  // 2. speed and network toggle
+  var sn = $("speed-note"); if (sn){ park(sn); var sl = document.querySelector(".spd .glbl"); if (sl) sl.insertAdjacentElement("afterend", ibtn("speed", {"data-notes":"speed-note"})); }
+  var nd = $("note-ds"); if (nd){ park(nd); $("ds-key").closest(".seg").appendChild(ibtn("which lenders count as key lenders", {"data-notes":"note-ds", style:"align-self:center;margin:0 6px"})); }
+  $("sb-note").style.display = "none";
+  // 3. no-dollars: a chip in the header; the full sentence in its popover
+  var bar = document.querySelector(".nodollar"); park(bar); bar.id = "note-dollars";
+  var chip = document.createElement("span"); chip.className = "chip"; chip.textContent = "Counts are medallions, not dollars";
+  chip.appendChild(ibtn("no dollar amounts", {"data-notes":"note-dollars"}));
+  var tc = document.querySelector(".topctl"); tc.insertBefore(chip, tc.firstChild);
+  // 4. hide-explanations is no longer needed
+  $("explain").style.display = "none"; document.body.classList.remove("notes-off");
+  // 5. timeline layers and the tier rule -> a Layers dropdown on the strip
+  var tp = $("tlpanel"), dd = document.createElement("div"); dd.className = "ldrop";
+  dd.innerHTML = "<button type='button' class='btn' id='layers-btn' aria-expanded='false' aria-controls='layers-panel' style='padding:3px 9px;font-size:12px'>Layers</button><div class='ldpanel' id='layers-panel' hidden></div>";
+  tp.appendChild(dd);
+  var lay = $("tl-layers"); lay.classList.remove("adv"); $("layers-panel").appendChild(lay);
+  var tier = [].slice.call(tp.querySelectorAll("p.note")).filter(function(e){ return e.textContent.indexOf("Large type") === 0; })[0];
+  if (tier){ park(tier); tier.id = "note-tier"; lay.appendChild(ibtn("major and minor events", {"data-notes":"note-tier"})); }
+  $("layers-btn").addEventListener("click", function(e){ e.stopPropagation(); var pn = $("layers-panel"); pn.hidden = !pn.hidden; this.setAttribute("aria-expanded", !pn.hidden); });
+  document.addEventListener("click", function(e){ if (!dd.contains(e.target)) { $("layers-panel").hidden = true; $("layers-btn").setAttribute("aria-expanded", "false"); } });
+  // 6. About this figure: caveats, how it is built, key lenders, layouts, events, sources, legend
+  var bd = document.createElement("div"); bd.className = "fbackdrop"; bd.id = "about-backdrop"; bd.hidden = true; document.body.appendChild(bd);
+  var ab = document.createElement("section"); ab.className = "card fmodal"; ab.id = "about"; ab.hidden = true; ab.setAttribute("role", "dialog"); ab.setAttribute("aria-modal", "true"); ab.setAttribute("aria-labelledby", "about-title");
+  var tabs = [["caveats","Caveats"],["how","How it's built"],["key","Key lenders"],["layouts","Layouts"],["events","Events"],["legend","Legend"],["sources","Sources"]];
+  ab.innerHTML = "<div class='evhead'><h2 id='about-title'>About this figure</h2><button type='button' class='linkbtn' id='about-close'>close (Esc)</button></div><div class='about-tabs' role='tablist'>" +
+    tabs.map(function(t){ return "<button type='button' role='tab' data-tab='"+t[0]+"'>"+t[1]+"</button>"; }).join("") + "</div>" +
+    tabs.map(function(t){ return "<div class='about-pane' data-tab='"+t[0]+"' role='tabpanel' hidden></div>"; }).join("");
+  document.body.appendChild(ab);
+  var pane = function(k){ return ab.querySelector(".about-pane[data-tab='"+k+"']"); };
+  var cav = document.querySelector(".caveats"), src = cav.querySelector(".src");
+  pane("sources").appendChild(src); pane("caveats").appendChild(cav);
+  pane("how").innerHTML = "<div id='about-how'></div>";
+  var ks = $("keysel-card"); ks.classList.remove("adv"); pane("key").appendChild(ks);
+  var lnote = [].slice.call(document.querySelectorAll("#noteholder p.note")).filter(function(e){ return e.textContent.indexOf("Flow (default)") === 0; })[0];
+  pane("layouts").innerHTML = (lnote ? lnote.outerHTML.replace(/ id="[^"]*"/g, "") : "") + "<div id='about-layout-metrics'></div>";
+  pane("events").innerHTML = (tier ? tier.outerHTML.replace(/ id="[^"]*"/g, "") : "") + "<p class='note' style='max-width:none'>Layers: tick the layers to show on the strip from its Layers button. \"Book turns bad\" (off by default) is each lender's first sign of trouble in its own filings (stage 232). Sources of every event: hover its tick.</p>";
+  var lg = document.querySelector(".legends"); lg.querySelectorAll(".adv").forEach(function(e){ e.classList.remove("adv"); }); pane("legend").appendChild(lg);
+  ab.querySelectorAll(".about-tabs button").forEach(function(b){ b.addEventListener("click", function(){ showTab(b.getAttribute("data-tab")); }); });
+  $("about-close").addEventListener("click", closeAbout); bd.addEventListener("click", closeAbout);
+  ab.addEventListener("keydown", function(e){ if (e.key !== "Tab") return; var f = [].slice.call(ab.querySelectorAll("button,select,input,a[href]")).filter(function(x){ return x.offsetParent !== null; }); if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f[f.length-1].focus(); } else if (!e.shiftKey && document.activeElement === f[f.length-1]){ e.preventDefault(); f[0].focus(); } });
+  var abtn = document.createElement("button"); abtn.className = "btn"; abtn.type = "button"; abtn.id = "about-btn"; abtn.textContent = "About this figure";
+  abtn.addEventListener("click", function(){ openAbout("caveats", abtn); }); tc.insertBefore(abtn, $("fullscreen"));
+  var foot = document.createElement("p"); foot.className = "footlink"; foot.innerHTML = "<button type='button' class='linkbtn' id='about-foot'>About this figure, caveats and sources</button>";
+  document.querySelector(".wrap").appendChild(foot); $("about-foot").addEventListener("click", function(){ openAbout("caveats", this); });
+  // 7. map legend line: roles, flow note, arrow colour = kind, an i for the full legend
+  var mc = $("mapcorner"); mc.appendChild(ibtn("the full legend", {"data-pop":"legend"}));
+  var kl = document.createElement("span"); kl.className = "small"; kl.style.margin = "0 4px"; kl.textContent = "arrow colour = kind of move"; $("maplegend").appendChild(kl);
+  $("maplegend").appendChild(mc.querySelector(".ibtn"));
+  POP.legend = function(){ return lg.innerHTML.replace(/ id="[^"]*"/g, ""); };
+}
+compactify();
 legends();
 keySelection();
 mtypeNote(); opLegend();
