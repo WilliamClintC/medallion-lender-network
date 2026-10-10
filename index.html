@@ -651,7 +651,7 @@ body.capture #tlscroll{max-height:none !important}
       <canvas id="fx" aria-hidden="true"></canvas>
       <svg id="netlabels" aria-hidden="true" viewBox="0 0 1000 650"><g id="g-nlabels"></g></svg>
       <div class="banner" id="banner" role="status" aria-live="polite"></div>
-      <div class="followbar" id="followbar"><span id="followbar-txt" role="status" aria-live="polite"></span><span id="follow-chips" class="gchips"></span><span class="fswitch" id="follow-switchwrap"><button type="button" class="btn" id="follow-prev" aria-label="Previous group">&lsaquo;</button><select id="follow-switch" aria-label="Switch group"></select><button type="button" class="btn" id="follow-next" aria-label="Next group">&rsaquo;</button></span><button type="button" class="btn" id="follow-add">+ Add group</button><button type="button" class="btn" id="follow-exit">Exit</button></div>
+      <div class="followbar" id="followbar"><span id="followbar-txt" role="status" aria-live="polite"></span><span id="follow-chips" class="gchips"></span><span class="fswitch" id="follow-switchwrap"><button type="button" class="btn" id="follow-prev" aria-label="Previous group">&lsaquo;</button><select id="follow-switch" aria-label="Switch group"></select><button type="button" class="btn" id="follow-next" aria-label="Next group">&rsaquo;</button></span><button type="button" class="btn" id="follow-story">Play the story</button><button type="button" class="btn" id="follow-add">+ Add group</button><button type="button" class="btn" id="follow-exit">Exit</button></div>
       <div class="oplegend" id="oplegend"></div>
       <div class="thinnote" id="thinnote">2000 to 2001: the filing record is thin (Figure 88); new-loan counts understate lending.</div>
       <svg id="net" role="img" aria-labelledby="net-desc" viewBox="0 0 1000 650">
@@ -3007,7 +3007,7 @@ function storyStart(G){
   return G.kind === "mrp" ? 252 : Math.max(0, G.month - 36);   // MRP+: Jan 2021
 }
 function storyCaption(t, showPlay){ $("storycap-txt").textContent = t; $("storycap-play").style.display = showPlay ? "" : "none"; $("storycap").classList.toggle("on", !!t); }
-function storyStop(){ if (storyT){ clearTimeout(storyT); storyT = null; } $("story-play").textContent = "Play the story"; }
+function storyStop(){ if (storyT){ clearTimeout(storyT); storyT = null; } $("story-play").textContent = "Play the story"; $("follow-story").textContent = "Play the story"; }
 function storyPlay(){
   var G = S.group, tx = G && storyText(G); if (!tx) return;
   if (storyT){ storyStop(); return; }
@@ -3015,10 +3015,10 @@ function storyPlay(){
   if (S.time !== "smooth"){ $("time-smooth").checked = true; setTime("smooth"); }
   var evs = storyEvents(G), last = Math.max.apply(null, evs.map(function(e){ return e.m; }).concat([0]));
   if (S.mi >= mp().P.n_months - 1 || S.mi > last) setMonth(storyStart(G), 0);
-  $("story-play").textContent = "Pause the story"; storyCaption(tx[0], false);
+  $("story-play").textContent = "Pause the story"; $("follow-story").textContent = "Pause the story"; storyCaption(tx[0], false);
   var clearAt = -1;
   var step = function(){
-    if (S.mi >= mp().P.n_months - 1){ storyT = null; $("story-play").textContent = "Play the story again"; storyCaption(tx[2], false); return; }
+    if (S.mi >= mp().P.n_months - 1){ storyT = null; $("story-play").textContent = "Play the story again"; $("follow-story").textContent = "Play the story again"; storyCaption(tx[2], false); return; }
     setMonth(S.mi + 1, 260);
     var hit = evs.filter(function(e){ return e.m === S.mi; });
     if (hit.length){ var t = hit.map(function(e){ return e.t; }).join(" \u00b7 "); storyCaption(t, false); clearAt = S.mi + 12;
@@ -3064,6 +3064,7 @@ function followBar(G){
     $("followbar-txt").textContent = "Following: " + G.label.replace(" to ", " \u2192 ") + (G.kind === "single" ? "" : " (" + fmt(groupSize(G)) + " medallions)");
   }
   $("follow-add").style.display = (G.multi ? G.parts.length < 4 : !!G.cohort) ? "" : "none";
+  $("follow-story").style.display = storyText(G) ? "" : "none";
   $("follow-switchwrap").style.display = G.multi ? "none" : "";
   syncSwitch(G); $("followbar").classList.add("on");
 }
@@ -3222,6 +3223,7 @@ function groupInfo(G){                      // the group's "i": counts, comparis
     L.push("<li>"+fmt(c.n_members)+" medallions sold. Registry: "+fmt(c.registry_medallions)+" distinct medallions on assigned loans; the cohort counts every medallion a loan names.</li>");
     L.push("<li>Comparison, kept by "+esc(c.seller)+": "+fmt(c.n_comparison)+(c.n_comparison < 200 ? " (a thin comparison)" : "")+".</li>");
     L.push("<li>Closed in the window: "+fmt(c.n_closed)+". Window "+c.window[0]+" to "+c.window[1]+".</li>");
+    L.push("<li>Dated by the month most of the sale was filed ("+monthLabel(G.month)+"); the window starts "+monthLabel(ymToMonth(c.window[0]))+".</li>");
   } else if (G.kind === "lenderdate") L.push("<li>Every medallion held at "+esc(G.label)+", weighted by its share of the loan ("+fmt(n)+" medallions).</li><li>Comparison: Public (no lender) that year.</li>");
   else if (G.kind === "single") L.push("<li>One medallion's lifeline.</li>");
   else if (c){
@@ -3327,6 +3329,7 @@ function multiOutcome(parts){
   return h + "</tbody></table><p class='small'>Each column is one group's share (and medallion count). Still with = the buyer for sales and purchases, the lender for books.</p>";
 }
 function groupTick(){
+  if (S.group && !storyT && $("storycap").classList.contains("on") && S.mi !== storyStart(S.group)) storyCaption("", false);   // the Before card only at the story's start
   if (!S.group || $("group-card").hidden) return;
   if (S.group.lastYear !== S.yi && S.group.kind !== "single"){ renderGroup(); return; }
   var x = 34 + S.mi*(640-34-8)/(mp().P.n_months-1);
@@ -3495,6 +3498,7 @@ document.addEventListener("click", function(e){
     if (e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
   });
   $("story-play").addEventListener("click", storyPlay);
+  $("follow-story").addEventListener("click", storyPlay);
   $("storycap-play").addEventListener("click", storyPlay);
   $("group-evonly").addEventListener("change", function(){ S.groupEvOnly = this.checked; updateActive(); tlSync(true); headline(); });
   $("fgrid").addEventListener("click", function(e){
